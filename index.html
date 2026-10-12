@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>پنل مدیریت سفارشات طراحی گرافیک</title>
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#eef2ff',
+              100: '#e0e7ff',
+              500: '#6366f1',
+              600: '#4f46e5',
+              700: '#4338ca'
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <!-- Font & Custom Styles -->
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="bg-slate-50 text-slate-800 antialiased min-h-screen">
+
+  <!-- هدر اصلی -->
+  <header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-sm">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <!-- لوگو و عنوان -->
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-violet-500 flex items-center justify-center text-white shadow-md">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"></path>
+          </svg>
+        </div>
+        <div>
+          <h1 class="text-lg font-bold text-slate-900 leading-tight">استودیو طراحی شخصی</h1>
+          <p class="text-xs text-slate-500">پنل مدیریت سفارشات، فاکتورها و درآمد</p>
+        </div>
+      </div>
+
+      <!-- وضعیت اتصال و دکمه‌ها -->
+      <div class="flex items-center gap-2 sm:gap-3">
+        <!-- نشانگر وضعیت اتصال به بک‌اند -->
+        <div id="connectionStatusBadge" class="hidden sm:flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-amber-50 text-amber-700 border border-amber-200 cursor-pointer" onclick="openSettingsModal()" title="کلیک برای تنظیمات API">
+          <span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
+          <span id="connectionStatusText">حالت دمو (آفلاین)</span>
+        </div>
+
+        <button onclick="fetchData()" id="refreshBtn" class="p-2 text-slate-600 hover:text-indigo-600 hover:bg-slate-100 rounded-lg transition" title="بروزرسانی داده‌ها">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+          </svg>
+        </button>
+
+        <button onclick="openSettingsModal()" class="p-2 text-slate-600 hover:text-indigo-600 hover:bg-slate-100 rounded-lg transition" title="تنظیمات Google Apps Script">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+          </svg>
+        </button>
+
+        <button onclick="openOrderModal()" class="flex items-center gap-1.5 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg font-medium text-sm shadow-sm transition shadow-indigo-200">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+          </svg>
+          <span>ثبت سفارش جدید</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- محتوای اصلی -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+
+    <!-- کارت‌های شاخص‌های کلیدی (KPIs) -->
+    <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+      <!-- تعداد سفارشات -->
+      <div class="bg-white p-5 rounded-2xl border border-slate-200/80 card-shadow card-hover">
+        <div class="flex items-center justify-between text-slate-500 mb-2">
+          <span class="text-xs font-semibold">تعداد سفارشات</span>
+          <span class="p-2 rounded-lg bg-blue-50 text-blue-600">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+            </svg>
+          </span>
+        </div>
+        <div class="flex items-baseline gap-2">
+          <span id="kpiTotalOrders" class="text-2xl font-extrabold text-slate-900">۰</span>
+          <span class="text-xs text-slate-500">پروژه</span>
+        </div>
+        <div class="mt-2 text-xs text-slate-500 flex justify-between">
+          <span>تکمیل‌شده: <strong id="kpiCompletedOrders" class="text-slate-700">۰</strong></span>
+          <span>در دست اجرا: <strong id="kpiActiveOrders" class="text-amber-600">۰</strong></span>
+        </div>
+      </div>
+
+      <!-- مجموع ساعات کار -->
+      <div class="bg-white p-5 rounded-2xl border border-slate-200/80 card-shadow card-hover">
+        <div class="flex items-center justify-between text-slate-500 mb-2">
+          <span class="text-xs font-semibold">مدت زمان طراحی</span>
+          <span class="p-2 rounded-lg bg-indigo-50 text-indigo-600">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+          </span>
+        </div>
+        <div class="flex items-baseline gap-2">
+          <span id="kpiWorkHours" class="text-2xl font-extrabold text-slate-900">۰</span>
+          <span class="text-xs text-slate-500">ساعت</span>
+        </div>
+        <div class="mt-2 text-xs text-slate-500">
+          <span>میانگین هر سفارش: <strong id="kpiAvgHours" class="text-slate-700">۰</strong> س</span>
+        </div>
+      </div>
+
+      <!-- درآمد کل وصول‌شده -->
+      <div class="bg-white p-5 rounded-2xl border border-slate-200/80 card-shadow card-hover">
+        <div class="flex items-center justify-between text-slate-500 mb-2">
+          <span class="text-xs font-semibold">درآمد وصول‌شده</span>
+          <span class="p-2 rounded-lg bg-emerald-50 text-emerald-600">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+          </span>
+        </div>
+        <div class="flex items-baseline gap-1">
+          <span id="kpiTotalRevenue" class="text-2xl font-extrabold text-emerald-600">۰</span>
+          <span class="text-xs text-slate-500">تومان</span>
+        </div>
+        <div class="mt-2 text-xs text-slate-500">
+          <span>کل ارزش سفارشات: <strong id="kpiGrossRevenue" class="text-slate-700">۰</strong></span>
+        </div>
+      </div>
+
+      <!-- طلب‌ها و مبالغ معوق -->
+      <div class="bg-white p-5 rounded-2xl border border-slate-200/80 card-shadow card-hover">
+        <div class="flex items-center justify-between text-slate-500 mb-2">
+          <span class="text-xs font-semibold">طلب‌ها و معوقات</span>
+          <span class="p-2 rounded-lg bg-rose-50 text-rose-600">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6"></path>
+            </svg>
+          </span>
+        </div>
+        <div class="flex items-baseline gap-1">
+          <span id="kpiTotalReceivables" class="text-2xl font-extrabold text-rose-600">۰</span>
+          <span class="text-xs text-slate-500">تومان</span>
+        </div>
+        <div class="mt-2 text-xs text-slate-500">
+          <span>تعداد طلب‌ها: <strong id="kpiUnpaidCount" class="text-slate-700">۰</strong> فقره</span>
+        </div>
+      </div>
+
+      <!-- کارهای رایگان / دوستانه -->
+      <div class="bg-white p-5 rounded-2xl border border-slate-200/80 card-shadow card-hover">
+        <div class="flex items-center justify-between text-slate-500 mb-2">
+          <span class="text-xs font-semibold">کارهای رایگان / هدیه</span>
+          <span class="p-2 rounded-lg bg-purple-50 text-purple-600">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+          </span>
+        </div>
+        <div class="flex items-baseline gap-2">
+          <span id="kpiFreeOrders" class="text-2xl font-extrabold text-purple-600">۰</span>
+          <span class="text-xs text-slate-500">سفارش</span>
+        </div>
+        <div class="mt-2 text-xs text-slate-500">
+          <span>سهم رایگان: <strong id="kpiFreePercent" class="text-slate-700">۰٪</strong> از کل</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- بخش فیلترهای پیشرفته و بازه‌های زمانی -->
+    <section class="bg-white rounded-2xl p-5 border border-slate-200/80 card-shadow space-y-4">
+      <!-- ردیف انتخاب بازه زمانی -->
+      <div class="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-slate-100">
+        <div class="flex items-center gap-1 sm:gap-2">
+          <span class="text-xs font-semibold text-slate-500 ml-1">بازه زمانی:</span>
+          <button onclick="setTimeframeFilter('all')" data-tf="all" class="tf-btn px-3 py-1.5 rounded-lg text-xs font-medium bg-indigo-50 text-indigo-600 border border-indigo-200 transition">همه</button>
+          <button onclick="setTimeframeFilter('weekly')" data-tf="weekly" class="tf-btn px-3 py-1.5 rounded-lg text-xs font-medium text-slate-600 hover:bg-slate-100 transition">هفتگی (۷ روز)</button>
+          <button onclick="setTimeframeFilter('monthly')" data-tf="monthly" class="tf-btn px-3 py-1.5 rounded-lg text-xs font-medium text-slate-600 hover:bg-slate-100 transition">ماهانه (۳۰ روز)</button>
+          <button onclick="setTimeframeFilter('six_months')" data-tf="six_months" class="tf-btn px-3 py-1.5 rounded-lg text-xs font-medium text-slate-600 hover:bg-slate-100 transition">شش‌ماهه</button>
+          <button onclick="setTimeframeFilter('yearly')" data-tf="yearly" class="tf-btn px-3 py-1.5 rounded-lg text-xs font-medium text-slate-600 hover:bg-slate-100 transition">سالانه</button>
+        </div>
+
+        <div class="text-xs text-slate-500" id="filteredResultsCount">
+          نمایش ۰ از ۰ سفارش
+        </div>
+      </div>
+
+      <!-- ردیف فیلترهای چندبعدی -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3">
+        <!-- جستجو -->
+        <div>
+          <label class="block text-xs font-medium text-slate-600 mb-1">جستجو</label>
+          <input type="text" id="searchInput" oninput="applyFilters()" placeholder="عنوان، فاکتور، مشتری..." class="w-full text-xs px-3 py-2 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500">
+        </div>
+
+        <!-- فیلتر نوع (دیجیتال/چاپ) -->
+        <div>
+          <label class="block text-xs font-medium text-slate-600 mb-1">نوع رسانه</label>
+          <select id="typeFilter" onchange="applyFilters()" class="w-full text-xs px-3 py-2 rounded-lg border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500">
+            <option value="all">همه انواع</option>
+            <option value="Digital">دیجیتال</option>
+            <option value="Print">چاپ</option>
+            <option value="Both">هر دو (دیجیتال و چاپ)</option>
+          </select>
+        </div>
+
+        <!-- فیلتر مشتری -->
+        <div>
+          <label class="block text-xs font-medium text-slate-600 mb-1">مشتری / کارفرما</label>
+          <select id="clientFilter" onchange="applyFilters()" class="w-full text-xs px-3 py-2 rounded-lg border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500">
+            <option value="all">همه مشتریان</option>
+          </select>
+        </div>
+
+        <!-- فیلتر وضعیت مالی -->
+        <div>
+          <label class="block text-xs font-medium text-slate-600 mb-1">وضعیت مالی</label>
+          <select id="financeFilter" onchange="applyFilters()" class="w-full text-xs px-3 py-2 rounded-lg border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500">
+            <option value="all">همه وضعیت‌ها</option>
+            <option value="Paid">تسویه شده (کامل)</option>
+            <option value="Partial">پرداخت ناقص (قسطی)</option>
+            <option value="Unpaid">پرداخت نشده (طلب)</option>
+            <option value="Free">رایگان / هدیه</option>
+          </select>
+        </div>
+
+        <!-- فیلتر فاکتورها -->
+        <div>
+          <label class="block text-xs font-medium text-slate-600 mb-1">شماره فاکتور</label>
+          <select id="invoiceFilter" onchange="applyFilters()" class="w-full text-xs px-3 py-2 rounded-lg border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500">
+            <option value="all">همه فاکتورها</option>
+          </select>
+        </div>
+      </div>
+    </section>
+
+    <!-- بخش نمودارهای تحلیلی و فصلی (Chart.js) -->
+    <section class="grid grid-cols-1 lg:grid-cols-3 gap-5">
+      <!-- نمودار دایره‌ای: توزیع دیجیتال در برابر چاپ -->
+      <div class="bg-white p-5 rounded-2xl border border-slate-200/80 card-shadow flex flex-col">
+        <div class="flex items-center justify-between mb-4">
+          <div>
+            <h3 class="text-sm font-bold text-slate-900">سهم رسانه (دیجیتال / چاپ)</h3>
+            <p class="text-xs text-slate-500">تفکیک پروژه‌ها بر اساس نوع کاربرد</p>
+          </div>
+          <span class="text-xs text-slate-400">Chart.js</span>
+        </div>
+        <div class="relative flex-1 min-h-[220px] flex items-center justify-center">
+          <canvas id="typeDistributionChart"></canvas>
+        </div>
+      </div>
+
+      <!-- نمودار مقایسه‌ای درآمد و طلب‌ها در دوره‌ها -->
+      <div class="bg-white p-5 rounded-2xl border border-slate-200/80 card-shadow lg:col-span-2 flex flex-col">
+        <div class="flex items-center justify-between mb-4">
+          <div>
+            <h3 class="text-sm font-bold text-slate-900">گزارش مالی و جریان درآمدی</h3>
+            <p class="text-xs text-slate-500">روند درآمد دریافتی در مقابل طلب‌های معوقه</p>
+          </div>
+          <div class="flex items-center gap-2">
+            <span class="inline-block w-3 h-3 rounded-full bg-emerald-500"></span>
+            <span class="text-xs text-slate-600 ml-2">درآمد</span>
+            <span class="inline-block w-3 h-3 rounded-full bg-rose-400"></span>
+            <span class="text-xs text-slate-600">طلب</span>
+          </div>
+        </div>
+        <div class="relative flex-1 min-h-[220px]">
+          <canvas id="revenueTrendChart"></canvas>
+        </div>
+      </div>
+    </section>
+
+    <!-- جدول جامع سفارشات -->
+    <section class="bg-white rounded-2xl border border-slate-200/80 card-shadow overflow-hidden">
+      <div class="p-4 border-b border-slate-100 flex flex-wrap items-center justify-between gap-3">
+        <div class="flex items-center gap-2">
+          <h2 class="text-sm font-bold text-slate-900">لیست جامع سفارشات</h2>
+          <span id="orderCountPill" class="text-xs px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-600 font-semibold">۰ مورد</span>
+        </div>
+        <div class="flex items-center gap-2 text-xs text-slate-500">
+          <span>💡 راهنما: روی آیکون 🔗 کلیک کنید تا سفارشات وابسته و ریسایزها را ببینید.</span>
+        </div>
+      </div>
+
+      <div class="table-container">
+        <table class="w-full text-xs text-right">
+          <thead class="bg-slate-50/80 text-slate-600 uppercase border-b border-slate-200/60 font-semibold">
+            <tr>
+              <th class="px-4 py-3.5">کد / رابطه</th>
+              <th class="px-4 py-3.5">عنوان سفارش</th>
+              <th class="px-4 py-3.5">مشتری</th>
+              <th class="px-4 py-3.5">نوع و ابعاد</th>
+              <th class="px-4 py-3.5">تاریخ سفارش / تحویل</th>
+              <th class="px-4 py-3.5">وضعیت کار</th>
+              <th class="px-4 py-3.5">زمان (ساعت)</th>
+              <th class="px-4 py-3.5">فاکتور و مبلغ</th>
+              <th class="px-4 py-3.5">فایل درایو</th>
+              <th class="px-4 py-3.5 text-center">عملیات</th>
+            </tr>
+          </thead>
+          <tbody id="ordersTableBody" class="divide-y divide-slate-100">
+            <!-- ردیف‌های جدول توسط جاوااسکریپت پر می‌شوند -->
+          </tbody>
+        </table>
+      </div>
+
+      <!-- وضعیت خالی بودن جدول -->
+      <div id="emptyState" class="hidden p-12 text-center">
+        <div class="w-12 h-12 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center mx-auto mb-3">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path>
+          </svg>
+        </div>
+        <p class="text-sm font-medium text-slate-700">هیچ سفارشی با این مشخصات یافت نشد!</p>
+        <p class="text-xs text-slate-500 mt-1">می‌توانید فیلترها را ریست کنید یا سفارش جدیدی ثبت نمایید.</p>
+      </div>
+
+      <!-- اسپینر بارگذاری -->
+      <div id="loadingState" class="hidden p-12 text-center">
+        <div class="inline-block w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin mb-3"></div>
+        <p class="text-xs text-slate-500 font-medium">در حال بارگذاری اطلاعات از سرور...</p>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ======================================================== -->
+  <!-- مودال ثبت / ویرایش سفارش (Order Form Modal) -->
+  <!-- ======================================================== -->
+  <div id="orderModal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 modal-backdrop">
+    <div class="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl border border-slate-100">
+      <div class="p-5 border-b border-slate-100 flex items-center justify-between sticky top-0 bg-white z-10">
+        <div>
+          <h3 id="orderModalTitle" class="text-base font-bold text-slate-900">ثبت سفارش جدید</h3>
+          <p class="text-xs text-slate-500">مشخصات دقیق کار، ابعاد، سفارش‌دهنده و وضعیت مالی</p>
+        </div>
+        <button onclick="closeOrderModal()" class="text-slate-400 hover:text-slate-600 p-1.5 rounded-lg hover:bg-slate-100 transition">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
+      </div>
+
+      <form id="orderForm" onsubmit="handleOrderFormSubmit(event)" class="p-5 space-y-4 text-xs">
+        <input type="hidden" id="formOrderId">
+
+        <!-- ردیف ۱: عنوان کار و مشتری -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label class="block font-medium text-slate-700 mb-1">عنوان سفارش / موضوع طراحی *</label>
+            <input type="text" id="formTitle" required placeholder="مثال: پوستر جشنواره بهاره، لوگوموشن..." class="w-full px-3 py-2 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500">
+          </div>
+          <div>
+            <label class="block font-medium text-slate-700 mb-1">نام سفارش‌دهنده / برند *</label>
+            <input type="text" id="formClientName" required placeholder="مثال: شرکت آلفا، دکتر محمدی..." class="w-full px-3 py-2 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500">
+          </div>
+        </div>
+
+        <!-- ردیف ۲: نوع، ابعاد و شماره تماس -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div>
+            <label class="block font-medium text-slate-700 mb-1">نوع کاربری *</label>
+            <select id="formType" class="w-full px-3 py-2 rounded-lg border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500">
+              <option value="Digital">دیجیتال (سوشیال، وب، نمایشگر)</option>
+              <option value="Print">چاپ (افست، بنر، کارت ویزیت)</option>
+              <option value="Both">هر دو (دیجیتال و چاپ)</option>
+            </select>
+          </div>
+          <div>
+            <label class="block font-medium text-slate-700 mb-1">ابعاد و قطع پروژه</label>
+            <input type="text" id="formFormatSize" placeholder="مثال: 1080x1920، A4، 50x70 cm" class="w-full px-3 py-2 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500">
+          </div>
+          <div>
+            <label class="block font-medium text-slate-700 mb-1">اطلاعات تماس سفارش‌دهنده</label>
+            <input type="text" id="formClientContact" placeholder="شماره تماس یا آیدی تلگرام" class="w-full px-3 py-2 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500">
+          </div>
+        </div>
+
+        <!-- ردیف ۳: تاریخ‌ها و مدت زمان کار -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div>
+            <label class="block font-medium text-slate-700 mb-1">تاریخ دریافت سفارش *</label>
+            <input type="date" id="formDateOrdered" required class="w-full px-3 py-2 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500">
+          </div>
+          <div>
+            <label class="block font-medium text-slate-700 mb-1">مهلت / ددلاین</label>
+            <input type="date" id="formDateDeadline" class="w-full px-3 py-2 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500">
+          </div>
+          <div>
+            <label class="block font-medium text-slate-700 mb-1">تاریخ تحویل نهایی</label>
+            <input type="date" id="formDateDelivered" class="w-full px-3 py-2 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500">
+          </div>
+        </div>
+
+        <!-- ردیف ۴: وضعیت کار، ساعات کاری و وابستگی -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div>
+            <label class="block font-medium text-slate-700 mb-1">وضعیت سفارش</label>
+            <select id="formStatus" class="w-full px-3 py-2 rounded-lg border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500">
+              <option value="In Progress">در حال طراحی</option>
+              <option value="Review">در حال بازبینی کارفرما</option>
+              <option value="Completed">تکمیل‌شده</option>
+              <option value="Delivered">تحویل داده‌شده</option>
+              <option value="Canceled">لغوشده</option>
+            </select>
+          </div>
+          <div>
+            <label class="block font-medium text-slate-700 mb-1">مدت زمان صرف‌شده (ساعت)</label>
+            <input type="number" id="formWorkHours" min="0" step="0.5" value="0" class="w-full px-3 py-2 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500">
+          </div>
+          <div>
+            <label class="block font-medium text-slate-700 mb-1">سفارش مرتبط / والد (Parent Order)</label>
+            <select id="formParentOrderId" class="w-full px-3 py-2 rounded-lg border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500">
+              <option value="">(پروژه مستقل / بدون والد)</option>
+              <!-- سفارشات موجود در اینجا لود می‌شوند -->
+            </select>
+            <p class="text-[10px] text-slate-400 mt-0.5">برای ریسایز، ادیت یا ورژن بعدیِ یک سفارش دیگر</p>
+          </div>
+        </div>
+
+        <!-- ردیف ۵: امور مالی و فاکتور -->
+        <div class="p-3.5 bg-slate-50 rounded-xl border border-slate-200/80 space-y-3">
+          <div class="flex items-center justify-between">
+            <span class="font-bold text-slate-800">امور مالی و فاکتور</span>
+            <label class="inline-flex items-center cursor-pointer gap-2">
+              <input type="checkbox" id="formIsFree" onchange="toggleFreeOrder(this.checked)" class="rounded text-indigo-600 focus:ring-indigo-500">
+              <span class="font-medium text-slate-600">این کار رایگان است (دوستانه / بدون هزینه)</span>
+            </label>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3" id="financeInputsContainer">
+            <div>
+              <label class="block font-medium text-slate-600 mb-1">شماره / کد فاکتور</label>
+              <input type="text" id="formInvoiceId" placeholder="مثال: INV-1403-01" class="w-full px-3 py-2 rounded-lg border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500">
+            </div>
+            <div>
+              <label class="block font-medium text-slate-600 mb-1">مبلغ کل هزینه (تومان)</label>
+              <input type="number" id="formTotalFee" min="0" step="10000" placeholder="0" class="w-full px-3 py-2 rounded-lg border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500">
+            </div>
+            <div>
+              <label class="block font-medium text-slate-600 mb-1">مبلغ دریافت شده / تسویه (تومان)</label>
+              <input type="number" id="formAmountPaid" min="0" step="10000" placeholder="0" class="w-full px-3 py-2 rounded-lg border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500">
+            </div>
+          </div>
+        </div>
+
+        <!-- ردیف ۶: لینک فایل‌ها در گوگل درایو -->
+        <div>
+          <label class="block font-medium text-slate-700 mb-1">لینک پوشه یا فایل در Google Drive</label>
+          <div class="relative">
+            <input type="url" id="formFilesLink" placeholder="https://drive.google.com/..." class="w-full pl-9 pr-3 py-2 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500">
+            <span class="absolute left-3 top-2.5 text-slate-400">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
+              </svg>
+            </span>
+          </div>
+        </div>
+
+        <!-- دکمه‌های فرم -->
+        <div class="pt-3 border-t border-slate-100 flex items-center justify-end gap-2">
+          <button type="button" onclick="closeOrderModal()" class="px-4 py-2 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 font-medium transition">انصراف</button>
+          <button type="submit" id="submitOrderBtn" class="px-5 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-medium shadow-sm transition">ذخیره سفارش</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ======================================================== -->
+  <!-- مودال تنظیمات اتصال Google Apps Script (Settings Modal) -->
+  <!-- ======================================================== -->
+  <div id="settingsModal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 modal-backdrop">
+    <div class="bg-white rounded-2xl w-full max-w-lg shadow-2xl border border-slate-100 p-6 space-y-4">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+        <h3 class="text-base font-bold text-slate-900">تنظیمات اتصال به Google Apps Script</h3>
+        <button onclick="closeSettingsModal()" class="text-slate-400 hover:text-slate-600 p-1.5 rounded-lg hover:bg-slate-100 transition">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
+      </div>
+
+      <div class="space-y-3 text-xs">
+        <p class="text-slate-600 leading-relaxed">
+          پس از ساخت پروژه اسکریپت در گوگل شیت و انتشار آن به عنوان <strong>Web App</strong> (با دسترسی Anyone)، آدرس اجرایی (Web App URL) را در اینجا وارد کنید:
+        </p>
+
+        <div>
+          <label class="block font-medium text-slate-700 mb-1">آدرس وب‌اپ گوگل (Web App URL)</label>
+          <input type="url" id="gasUrlInput" placeholder="https://script.google.com/macros/s/.../exec" class="w-full px-3 py-2 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500">
+        </div>
+
+        <div class="p-3 bg-amber-50 rounded-xl border border-amber-200 text-amber-800 space-y-1">
+          <p class="font-semibold">نکات مهم هنگام انتشار در Google Apps Script:</p>
+          <ul class="list-disc list-inside space-y-0.5 text-[11px]">
+            <li>در بخش <strong>Execute as</strong> گزینه <em>Me</em> را انتخاب کنید.</li>
+            <li>در بخش <strong>Who has access</strong> گزینه <em>Anyone</em> را انتخاب کنید.</li>
+            <li>اگر آدرسی وارد نکنید، سیستم در <strong>حالت آزمایشی (Demo)</strong> کار خواهد کرد.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="pt-3 border-t border-slate-100 flex items-center justify-between">
+        <button onclick="clearGasUrl()" class="text-xs text-rose-600 hover:underline">بازنشانی به حالت دمو</button>
+        <div class="flex items-center gap-2">
+          <button onclick="closeSettingsModal()" class="px-4 py-2 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 text-xs font-medium transition">بستن</button>
+          <button onclick="saveGasUrl()" class="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-medium shadow-sm transition">ذخیره و اتصال</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- اسکریپت اصلی پنل -->
+  <script src="app.js"></script>
+</body>
+</html>
