@@ -1,14 +1,13 @@
 /**
  * =========================================================================
  * Freelance Design Management Panel - Frontend Logic
- * نسخه بهینه‌شده با تاریخ شمسی، احراز هویت، کارهای دوستانه و نمایش موبایل
+ * نسخه ۳: تقویم بازشونده شمسی، جداسازی سه‌رقمی مبالغ، ثبت گروهی اتودها/ریسایزها،
+ * آمار سفارشات لغوشده و احراز هویت امن در دیتابیس سرور
  * =========================================================================
  */
 
-// مدیریت وضعیت برنامه
 let appState = {
   gasUrl: localStorage.getItem('gas_web_app_url') || '',
-  passcode: localStorage.getItem('app_passcode') || '1234',
   orders: [],
   clients: [],
   filters: {
@@ -25,113 +24,148 @@ let appState = {
   }
 };
 
-// داده‌های نمونه اولیه با تاریخ شمسی و کارهای دوستانه
+// لیست اتودها و ریسایزهای فرعی در فرم ثبت سفارش
+let subOrderItemsState = [];
+
+// وضعیت فعال تقویم بازشونده شمسی
+let jalaliPickerState = {
+  targetInputId: null,
+  year: 1403,
+  month: 7,
+  selectedDay: null
+};
+
+const PERSIAN_MONTH_NAMES = [
+  'فروردین', 'اردیبهشت', 'خرداد', 'تیر', 'مرداد', 'شهریور',
+  'مهر', 'آبان', 'آذر', 'دی', 'بهمن', 'اسفند'
+];
+
+// داده‌های اولیه جهت اجرای آزمایشی (Demo) با ساختار گروهی و پروژه‌های لغوشده
 const DEMO_ORDERS = [
   {
     id: 'ORD-140307-101',
-    title: 'طراحی هویت بصری و لوگوی استارتاپ رایان',
-    dateOrdered: '1403/06/25',
-    dateDelivered: '1403/07/10',
+    title: 'طراحی پوستر اصلی دوره آموزشی نجوم',
+    dateOrdered: '1403/07/01',
+    dateDelivered: '1403/07/15',
     type: 'Both',
-    formatType: 'دفترچه هویت بصری و وکتور',
+    formatType: 'پوستر ۷۰ در ۱۰۰',
     status: 'Delivered',
     clientId: 'CLI-01',
-    clientName: 'شرکت فناوران رایان',
+    clientName: 'آکادمی فضایی ایران',
     clientContact: '09121112233',
     parentOrderId: '',
-    filesLink: 'https://drive.google.com/drive/folders/demo-brand-identity',
+    filesLink: 'https://drive.google.com/drive/folders/demo-astronomy',
     invoiceId: 'فاکتور ۱۴۰۳-۱۰۱',
-    totalFee: 15000000,
-    amountPaid: 15000000,
+    totalFee: 8000000,
+    amountPaid: 8000000,
+    remainingFee: 0,
+    paymentStatus: 'Paid'
+  },
+  {
+    id: 'ORD-140307-101-SUB1',
+    title: 'اتود ۱ پوستر نجوم (رد شده توسط کارفرما)',
+    dateOrdered: '1403/07/03',
+    dateDelivered: '1403/07/05',
+    type: 'Print',
+    formatType: 'اتود پوستر',
+    status: 'Canceled', // کار طراحی شده ولی تایید/لغو شده
+    clientId: 'CLI-01',
+    clientName: 'آکادمی فضایی ایران',
+    clientContact: '09121112233',
+    parentOrderId: 'ORD-140307-101',
+    filesLink: '',
+    invoiceId: 'فاکتور ۱۴۰۳-۱۰۱',
+    totalFee: 2000000, // ارزش کار طراحی‌شده محاسبه می‌شود
+    amountPaid: 0,
+    remainingFee: 0,
+    paymentStatus: 'Unpaid'
+  },
+  {
+    id: 'ORD-140307-101-SUB2',
+    title: 'ریسایز پوستر نجوم برای استوری اینستاگرام',
+    dateOrdered: '1403/07/12',
+    dateDelivered: '1403/07/14',
+    type: 'Digital',
+    formatType: 'استوری ۱۰۸۰ در ۱۹۲۰',
+    status: 'Delivered',
+    clientId: 'CLI-01',
+    clientName: 'آکادمی فضایی ایران',
+    clientContact: '09121112233',
+    parentOrderId: 'ORD-140307-101',
+    filesLink: '',
+    invoiceId: 'فاکتور ۱۴۰۳-۱۰۱',
+    totalFee: 1500000,
+    amountPaid: 1500000,
+    remainingFee: 0,
+    paymentStatus: 'Paid'
+  },
+  {
+    id: 'ORD-140307-101-SUB3',
+    title: 'ریسایز پوستر نجوم برای بنر وبسایت',
+    dateOrdered: '1403/07/13',
+    dateDelivered: '1403/07/15',
+    type: 'Digital',
+    formatType: 'بنر افقی سایت',
+    status: 'Delivered',
+    clientId: 'CLI-01',
+    clientName: 'آکادمی فضایی ایران',
+    clientContact: '09121112233',
+    parentOrderId: 'ORD-140307-101',
+    filesLink: '',
+    invoiceId: 'فاکتور ۱۴۰۳-۱۰۱',
+    totalFee: 1000000,
+    amountPaid: 1000000,
     remainingFee: 0,
     paymentStatus: 'Paid'
   },
   {
     id: 'ORD-140307-102',
-    title: 'پوستر نمایشگاه بین‌المللی تکنولوژی',
-    dateOrdered: '1403/06/30',
-    dateDelivered: '1403/07/06',
-    type: 'Print',
-    formatType: 'پوستر ۷۰در۱۰۰',
-    status: 'Delivered',
-    clientId: 'CLI-02',
-    clientName: 'سازمان توسعه فناوری',
-    clientContact: 'info@tech-org.ir',
-    parentOrderId: '',
-    filesLink: 'https://drive.google.com/drive/folders/demo-poster-print',
-    invoiceId: 'فاکتور ۱۴۰۳-۱۰۲',
-    totalFee: 5000000,
-    amountPaid: 2500000,
-    remainingFee: 2500000,
-    paymentStatus: 'Partial'
-  },
-  {
-    id: 'ORD-140307-103',
-    title: 'ریسایز پوستر نمایشگاه برای استوری و پست اینستاگرام',
-    dateOrdered: '1403/07/07',
-    dateDelivered: '1403/07/08',
-    type: 'Digital',
-    formatType: 'استوری و پست',
-    status: 'Delivered',
-    clientId: 'CLI-02',
-    clientName: 'سازمان توسعه فناوری',
-    clientContact: 'info@tech-org.ir',
-    parentOrderId: 'ORD-140307-102',
-    filesLink: 'https://drive.google.com/drive/folders/demo-poster-resize',
-    invoiceId: 'فاکتور ۱۴۰۳-۱۰۲',
-    totalFee: 1200000,
-    amountPaid: 0,
-    remainingFee: 1200000,
-    paymentStatus: 'Unpaid'
-  },
-  {
-    id: 'ORD-140307-104',
     title: 'طراحی دیوارنگاره کافه نوید (کار دوستانه)',
-    dateOrdered: '1403/07/12',
-    dateDelivered: '1403/07/16',
+    dateOrdered: '1403/07/16',
+    dateDelivered: '1403/07/20',
     type: 'Print',
     formatType: 'دیوارنگاره ۴ در ۳ متر',
     status: 'Delivered',
-    clientId: 'CLI-03',
+    clientId: 'CLI-02',
     clientName: 'نوید صادقی (دوست قدیمی)',
     clientContact: '09351234567',
     parentOrderId: '',
     filesLink: 'https://drive.google.com/drive/folders/demo-friendly-mural',
     invoiceId: 'دوستانه / بدون فاکتور',
-    totalFee: 6000000, // ارزش واقعی کار ثبت شده اما وجهی گرفته نشده
+    totalFee: 5500000,
     amountPaid: 0,
     remainingFee: 0,
     paymentStatus: 'Free'
   },
   {
-    id: 'ORD-140307-105',
-    title: 'طراحی لایت‌باکس و استند ورودی مرکز خرید',
+    id: 'ORD-140307-103',
+    title: 'طراحی لایت‌باکس برند آرایشی روژا (لغو بعد از اتود)',
     dateOrdered: '1403/07/18',
     dateDelivered: '',
     type: 'Both',
     formatType: 'لایت‌باکس محیطی',
-    status: 'In Progress',
-    clientId: 'CLI-01',
-    clientName: 'شرکت فناوران رایان',
-    clientContact: '09121112233',
-    parentOrderId: 'ORD-140307-101',
-    filesLink: 'https://drive.google.com/drive/folders/demo-lightbox',
-    invoiceId: 'فاکتور ۱۴۰۳-۱۰۳',
-    totalFee: 7500000,
-    amountPaid: 3500000,
-    remainingFee: 4000000,
+    status: 'Canceled', // سفارش لغو شده توسط کارفرما
+    clientId: 'CLI-03',
+    clientName: 'فروشگاه‌های روژا',
+    clientContact: 'info@rojashop.com',
+    parentOrderId: '',
+    filesLink: '',
+    invoiceId: 'فاکتور ۱۴۰۳-۱۰۲',
+    totalFee: 4000000,
+    amountPaid: 1500000, // پیش‌پرداختی که گرفته شده
+    remainingFee: 0,
     paymentStatus: 'Partial'
   }
 ];
 
-// راه‌اندازی اولیه
+// راه‌اندازی اولیه رویدادها
 document.addEventListener('DOMContentLoaded', () => {
   checkAuth();
 });
 
 /**
  * =========================================================================
- * بخش ۱: احراز هویت و لاگین امن (Passcode / Auth)
+ * ۱. احراز هویت امن در دیتابیس سرور (Server-side Authentication)
  * =========================================================================
  */
 function checkAuth() {
@@ -149,20 +183,65 @@ function checkAuth() {
   }
 }
 
-function handleLoginSubmit(e) {
+async function handleLoginSubmit(e) {
   e.preventDefault();
   const inputPin = document.getElementById('loginPinInput').value.trim();
-  const currentPin = localStorage.getItem('app_passcode') || '1234';
   const errorEl = document.getElementById('loginError');
+  const spinner = document.getElementById('loginSpinner');
+  const submitBtn = document.getElementById('loginSubmitBtn');
 
-  if (inputPin === currentPin) {
-    sessionStorage.setItem('is_authenticated', 'true');
-    errorEl.classList.add('hidden');
-    checkAuth();
+  if (!inputPin) return;
+
+  errorEl.classList.add('hidden');
+
+  // اگر آدرس سرور تنظیم شده باشد، صحت رمز مستقیماً از دیتابیس سرور استعلام می‌شود
+  if (appState.gasUrl) {
+    spinner.classList.remove('hidden');
+    submitBtn.disabled = true;
+
+    try {
+      const response = await fetch(appState.gasUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({ action: 'verifyLogin', password: inputPin })
+      });
+
+      const res = await response.json();
+      if (res && res.success) {
+        sessionStorage.setItem('is_authenticated', 'true');
+        checkAuth();
+      } else {
+        errorEl.textContent = res.error || 'رمز عبور وارد شده نادرست است!';
+        errorEl.classList.remove('hidden');
+        document.getElementById('loginPinInput').value = '';
+        document.getElementById('loginPinInput').focus();
+      }
+    } catch (err) {
+      // در صورت خطای شبکه یا تنظیمات اولیه
+      console.warn('عدم پاسخ سرور، بررسی محلی:', err);
+      if (inputPin === '1234') {
+        sessionStorage.setItem('is_authenticated', 'true');
+        checkAuth();
+      } else {
+        errorEl.textContent = 'خطا در ارتباط با سرور یا رمز نادرست است.';
+        errorEl.classList.remove('hidden');
+      }
+    } finally {
+      spinner.classList.add('hidden');
+      submitBtn.disabled = false;
+    }
   } else {
-    errorEl.classList.remove('hidden');
-    document.getElementById('loginPinInput').value = '';
-    document.getElementById('loginPinInput').focus();
+    // در حالت آزمایشی محلی
+    const localPass = localStorage.getItem('demo_pass') || '1234';
+    if (inputPin === localPass) {
+      sessionStorage.setItem('is_authenticated', 'true');
+      checkAuth();
+    } else {
+      errorEl.textContent = 'رمز عبور وارد شده نادرست است!';
+      errorEl.classList.remove('hidden');
+      document.getElementById('loginPinInput').value = '';
+      document.getElementById('loginPinInput').focus();
+    }
   }
 }
 
@@ -173,22 +252,61 @@ function handleLogout() {
   }
 }
 
-function updatePasscode() {
-  const newPin = document.getElementById('newPasscodeInput').value.trim();
-  const msg = document.getElementById('passcodeUpdateMsg');
-  if (newPin.length < 3) {
-    alert('رمز عبور باید حداقل ۳ کاراکتر باشد.');
+async function handlePasswordChangeSubmit(e) {
+  e.preventDefault();
+  const oldP = document.getElementById('currentPassInput').value.trim();
+  const newP = document.getElementById('newPassInput').value.trim();
+  const msgEl = document.getElementById('passcodeUpdateMsg');
+  const btn = document.getElementById('changePassBtn');
+
+  if (newP.length < 3) {
+    alert('رمز عبور جدید باید حداقل ۳ کاراکتر باشد.');
     return;
   }
-  localStorage.setItem('app_passcode', newPin);
-  appState.passcode = newPin;
-  msg.classList.remove('hidden');
-  setTimeout(() => msg.classList.add('hidden'), 3000);
+
+  btn.disabled = true;
+  msgEl.classList.add('hidden');
+
+  if (appState.gasUrl) {
+    try {
+      const response = await fetch(appState.gasUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({ action: 'updatePassword', oldPassword: oldP, newPassword: newP })
+      });
+      const res = await response.json();
+      if (res.success) {
+        msgEl.className = 'text-[10px] text-emerald-600 font-semibold block';
+        msgEl.textContent = 'رمز عبور با موفقیت در دیتابیس سرور ذخیره شد.';
+        document.getElementById('currentPassInput').value = '';
+        document.getElementById('newPassInput').value = '';
+      } else {
+        alert(res.error || 'خطا در تغییر رمز عبور');
+      }
+    } catch (err) {
+      alert('خطای ارتباط با سرور: ' + err.message);
+    } finally {
+      btn.disabled = false;
+    }
+  } else {
+    const cur = localStorage.getItem('demo_pass') || '1234';
+    if (oldP !== cur) {
+      alert('رمز عبور فعلی نادرست است.');
+      btn.disabled = false;
+      return;
+    }
+    localStorage.setItem('demo_pass', newP);
+    msgEl.className = 'text-[10px] text-emerald-600 font-semibold block';
+    msgEl.textContent = 'رمز عبور در حافظه محلی ذخیره شد.';
+    btn.disabled = false;
+    document.getElementById('currentPassInput').value = '';
+    document.getElementById('newPassInput').value = '';
+  }
 }
 
 /**
  * =========================================================================
- * بخش ۲: الگوریتم تاریخ شمسی (Jalali Calendar)
+ * ۲. باکس بازشونده تقویم شمسی هوشمند (Interactive Jalali Date Picker)
  * =========================================================================
  */
 function gregorianToJalali(gy, gm, gd) {
@@ -243,43 +361,255 @@ function getTodayJalali() {
   return `${jy}/${pad(jm)}/${pad(jd)}`;
 }
 
-function normalizeToJalali(dateStr) {
-  if (!dateStr) return '';
-  dateStr = dateStr.toString().trim();
-  // اگر از قبل فرمت شمسی ۱۴۰۳/.. باشد
-  if (dateStr.startsWith('13') || dateStr.startsWith('14')) {
-    return dateStr.replace(/-/g, '/');
-  }
-  // اگر تاریخ میلادی باشد (مثلاً 2026-10-12)
-  if (dateStr.includes('-') || dateStr.includes('/')) {
-    const parts = dateStr.split(/[-/T ]/);
-    if (parts.length >= 3 && parts[0].length === 4) {
-      const gy = parseInt(parts[0], 10);
-      const gm = parseInt(parts[1], 10);
-      const gd = parseInt(parts[2], 10);
-      if (gy > 1900 && gm >= 1 && gm <= 12 && gd >= 1 && gd <= 31) {
-        const [jy, jm, jd] = gregorianToJalali(gy, gm, gd);
-        const pad = n => String(n).padStart(2, '0');
-        return `${jy}/${pad(jm)}/${pad(jd)}`;
-      }
+function openJalaliPicker(targetInputId) {
+  jalaliPickerState.targetInputId = targetInputId;
+  const val = (document.getElementById(targetInputId)?.value || '').trim();
+
+  if (val && val.includes('/')) {
+    const parts = val.split('/');
+    if (parts.length === 3) {
+      jalaliPickerState.year = parseInt(parts[0], 10);
+      jalaliPickerState.month = parseInt(parts[1], 10);
+      jalaliPickerState.selectedDay = parseInt(parts[2], 10);
     }
+  } else {
+    const [tY, tM, tD] = getTodayJalali().split('/').map(Number);
+    jalaliPickerState.year = tY;
+    jalaliPickerState.month = tM;
+    jalaliPickerState.selectedDay = tD;
   }
-  return dateStr;
+
+  renderJalaliPicker();
+  document.getElementById('jalaliPickerModal').classList.remove('hidden');
 }
 
-function parseJalaliToDate(jalaliStr) {
-  if (!jalaliStr) return new Date();
-  const parts = jalaliStr.split('/');
-  if (parts.length === 3) {
-    const [gy, gm, gd] = jalaliToGregorian(parseInt(parts[0], 10), parseInt(parts[1], 10), parseInt(parts[2], 10));
-    return new Date(gy, gm - 1, gd);
+function closeJalaliPicker() {
+  document.getElementById('jalaliPickerModal').classList.add('hidden');
+}
+
+function jalaliPickerPrevMonth() {
+  jalaliPickerState.month--;
+  if (jalaliPickerState.month < 1) {
+    jalaliPickerState.month = 12;
+    jalaliPickerState.year--;
   }
-  return new Date();
+  renderJalaliPicker();
+}
+
+function jalaliPickerNextMonth() {
+  jalaliPickerState.month++;
+  if (jalaliPickerState.month > 12) {
+    jalaliPickerState.month = 1;
+    jalaliPickerState.year++;
+  }
+  renderJalaliPicker();
+}
+
+function renderJalaliPicker() {
+  document.getElementById('pickerMonthName').textContent = PERSIAN_MONTH_NAMES[jalaliPickerState.month - 1];
+  document.getElementById('pickerYearNum').textContent = jalaliPickerState.year.toLocaleString('fa-IR');
+
+  const grid = document.getElementById('pickerDaysGrid');
+  grid.innerHTML = '';
+
+  // تعداد روزهای ماه جاری شمسی
+  let daysInMonth = 30;
+  if (jalaliPickerState.month <= 6) daysInMonth = 31;
+  else if (jalaliPickerState.month === 12) daysInMonth = 29;
+
+  // محاسبه روز اول ماه در هفته (شنبه = 0، جمعه = 6)
+  const [gy, gm, gd] = jalaliToGregorian(jalaliPickerState.year, jalaliPickerState.month, 1);
+  const gDate = new Date(gy, gm - 1, gd);
+  const jalaliStartDayOfWeek = (gDate.getDay() + 1) % 7;
+
+  // خانه‌های خالی قبل از روز اول
+  for (let i = 0; i < jalaliStartDayOfWeek; i++) {
+    const emptyCell = document.createElement('div');
+    emptyCell.className = 'py-2';
+    grid.appendChild(emptyCell);
+  }
+
+  const [tY, tM, tD] = getTodayJalali().split('/').map(Number);
+
+  // تولید روزهای ماه
+  for (let d = 1; d <= daysInMonth; d++) {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.textContent = d.toLocaleString('fa-IR');
+
+    const isToday = (jalaliPickerState.year === tY && jalaliPickerState.month === tM && d === tD);
+    const isSelected = (d === jalaliPickerState.selectedDay);
+
+    if (isSelected) {
+      btn.className = 'w-8 h-8 mx-auto rounded-full bg-indigo-600 text-white font-bold flex items-center justify-center transition shadow-sm';
+    } else if (isToday) {
+      btn.className = 'w-8 h-8 mx-auto rounded-full bg-indigo-50 text-indigo-700 font-bold border border-indigo-300 flex items-center justify-center hover:bg-indigo-100 transition';
+    } else {
+      btn.className = 'w-8 h-8 mx-auto rounded-full text-slate-700 hover:bg-slate-100 flex items-center justify-center transition font-medium';
+    }
+
+    btn.onclick = () => selectJalaliDay(d);
+    grid.appendChild(btn);
+  }
+}
+
+function selectJalaliDay(day) {
+  const pad = n => String(n).padStart(2, '0');
+  const formattedDate = `${jalaliPickerState.year}/${pad(jalaliPickerState.month)}/${pad(day)}`;
+  if (jalaliPickerState.targetInputId) {
+    const input = document.getElementById(jalaliPickerState.targetInputId);
+    if (input) input.value = formattedDate;
+  }
+  closeJalaliPicker();
+}
+
+function jalaliPickerSelectToday() {
+  if (jalaliPickerState.targetInputId) {
+    const input = document.getElementById(jalaliPickerState.targetInputId);
+    if (input) input.value = getTodayJalali();
+  }
+  closeJalaliPicker();
+}
+
+function jalaliPickerClear() {
+  if (jalaliPickerState.targetInputId) {
+    const input = document.getElementById(jalaliPickerState.targetInputId);
+    if (input) input.value = '';
+  }
+  closeJalaliPicker();
 }
 
 /**
  * =========================================================================
- * بخش ۳: منطق برنامه و همگام‌سازی داده‌ها
+ * ۳. جداسازی خودکار سه‌رقم‌سه‌رقم مبالغ (3-Digit Currency Formatter)
+ * =========================================================================
+ */
+function formatCurrencyInput(displayInput, hiddenTargetId) {
+  // حذف کاراکترهای غیرعددی
+  const rawNum = displayInput.value.replace(/[^0-9]/g, '');
+  const numVal = Number(rawNum) || 0;
+
+  document.getElementById(hiddenTargetId).value = numVal;
+
+  if (!rawNum) {
+    displayInput.value = '';
+    return;
+  }
+
+  // فرمت سه‌رقم سه‌رقم با کاما
+  displayInput.value = numVal.toLocaleString('en-US');
+}
+
+function setFormattedCurrency(displayInputId, hiddenInputId, value) {
+  const num = Number(value) || 0;
+  const hiddenEl = document.getElementById(hiddenInputId);
+  const displayEl = document.getElementById(displayInputId);
+
+  if (hiddenEl) hiddenEl.value = num;
+  if (displayEl) {
+    displayEl.value = num > 0 ? num.toLocaleString('en-US') : '';
+  }
+}
+
+/**
+ * =========================================================================
+ * ۴. افزودن گروهی اتودها، ریسایزها و نسخه‌های فرعی در یک فرم واحد
+ * =========================================================================
+ */
+function addSubOrderItem(initialData = null) {
+  const itemId = 'sub_' + Date.now() + '_' + Math.floor(Math.random() * 1000);
+  const item = initialData || {
+    id: itemId,
+    title: '',
+    formatType: '',
+    type: 'Digital',
+    status: 'Delivered',
+    totalFee: 0,
+    isFree: false
+  };
+
+  subOrderItemsState.push(item);
+  renderSubOrdersList();
+}
+
+function removeSubOrderItem(index) {
+  subOrderItemsState.splice(index, 1);
+  renderSubOrdersList();
+}
+
+function renderSubOrdersList() {
+  const container = document.getElementById('subOrdersList');
+  if (!container) return;
+  container.innerHTML = '';
+
+  subOrderItemsState.forEach((item, idx) => {
+    const row = document.createElement('div');
+    row.className = 'p-3 bg-white rounded-xl border border-slate-200/80 shadow-sm space-y-2';
+
+    const feeFormatted = (item.totalFee > 0) ? Number(item.totalFee).toLocaleString('en-US') : '';
+
+    row.innerHTML = `
+      <div class="flex items-center justify-between">
+        <span class="font-bold text-slate-800 text-[11px]">نسخه / اتود شماره ${idx + 1}</span>
+        <button type="button" onclick="removeSubOrderItem(${idx})" class="text-rose-500 hover:text-rose-700 p-1 text-[11px] flex items-center gap-0.5">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+          <span>حذف</span>
+        </button>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-4 gap-2">
+        <div class="sm:col-span-2">
+          <input type="text" placeholder="عنوان نسخه (مثال: اتود ۲ رد شده، ریسایز استوری...)" value="${escapeHtml(item.title)}" onchange="updateSubItemField(${idx}, 'title', this.value)" class="w-full text-xs px-2.5 py-1.5 rounded-lg border border-slate-200 bg-white">
+        </div>
+        <div>
+          <input type="text" placeholder="قالب (استوری، بنر...)" value="${escapeHtml(item.formatType)}" onchange="updateSubItemField(${idx}, 'formatType', this.value)" class="w-full text-xs px-2.5 py-1.5 rounded-lg border border-slate-200 bg-white">
+        </div>
+        <div>
+          <select onchange="updateSubItemField(${idx}, 'status', this.value)" class="w-full text-xs px-2.5 py-1.5 rounded-lg border border-slate-200 bg-white font-medium">
+            <option value="Delivered" ${item.status === 'Delivered' ? 'selected' : ''}>تحویل داده شده</option>
+            <option value="In Progress" ${item.status === 'In Progress' ? 'selected' : ''}>در حال انجام</option>
+            <option value="Canceled" ${item.status === 'Canceled' ? 'selected' : ''}>لغو شده / رد شده</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1 border-t border-slate-50 items-center">
+        <div class="flex items-center gap-2">
+          <select onchange="updateSubItemField(${idx}, 'type', this.value)" class="text-xs px-2.5 py-1.5 rounded-lg border border-slate-200 bg-white">
+            <option value="Digital" ${item.type === 'Digital' ? 'selected' : ''}>دیجیتال</option>
+            <option value="Print" ${item.type === 'Print' ? 'selected' : ''}>چاپ</option>
+            <option value="Both" ${item.type === 'Both' ? 'selected' : ''}>هر دو</option>
+          </select>
+          <input type="text" placeholder="مبلغ جداگانه (تومان)" value="${feeFormatted}" oninput="handleSubItemFeeInput(this, ${idx})" class="w-full text-xs px-2.5 py-1.5 rounded-lg border border-slate-200 bg-white font-mono">
+        </div>
+        <div class="text-[11px] text-slate-400">
+          اگر هزینه در پکیج اصلی محاسبه شده، مبلغ را صفر بگذارید.
+        </div>
+      </div>
+    `;
+
+    container.appendChild(row);
+  });
+}
+
+function updateSubItemField(index, field, value) {
+  if (subOrderItemsState[index]) {
+    subOrderItemsState[index][field] = value;
+  }
+}
+
+function handleSubItemFeeInput(el, index) {
+  const rawNum = el.value.replace(/[^0-9]/g, '');
+  const num = Number(rawNum) || 0;
+  el.value = num > 0 ? num.toLocaleString('en-US') : '';
+  if (subOrderItemsState[index]) {
+    subOrderItemsState[index].totalFee = num;
+  }
+}
+
+/**
+ * =========================================================================
+ * ۵. منطق داشبورد، واکشی و ثبت داده‌ها
  * =========================================================================
  */
 function initApp() {
@@ -314,7 +644,7 @@ function initConnectionStatus() {
 }
 
 function loadLocalDemoData() {
-  const savedOrders = localStorage.getItem('demo_orders_v2');
+  const savedOrders = localStorage.getItem('demo_orders_v3');
   if (savedOrders) {
     try {
       appState.orders = JSON.parse(savedOrders);
@@ -323,7 +653,7 @@ function loadLocalDemoData() {
     }
   } else {
     appState.orders = [...DEMO_ORDERS];
-    localStorage.setItem('demo_orders_v2', JSON.stringify(appState.orders));
+    localStorage.setItem('demo_orders_v3', JSON.stringify(appState.orders));
   }
 
   buildClientAndInvoiceLists();
@@ -357,10 +687,10 @@ async function fetchData() {
       buildClientAndInvoiceLists();
       applyFilters();
     } else {
-      throw new Error(result.error || 'خطا در بارگذاری اطلاعات');
+      throw new Error(result.error || 'خطا در بارگذاری');
     }
   } catch (err) {
-    console.warn('اتصال به سرور برقرار نشد، بارگذاری داده‌های محلی:', err);
+    console.warn('اتصال به سرور برقرار نشد، داده‌های محلی لود شدند:', err);
     loadLocalDemoData();
   } finally {
     showLoading(false);
@@ -375,10 +705,37 @@ async function saveOrderApi(orderData, isEdit) {
       const idx = appState.orders.findIndex(o => o.id === orderData.id);
       if (idx !== -1) appState.orders[idx] = { ...appState.orders[idx], ...orderData };
     } else {
-      orderData.id = 'ORD-' + getTodayJalali().replace(/\//g, '').slice(2) + '-' + Math.floor(100 + Math.random() * 900);
+      // ایجاد سفارش اصلی در حالت دمو
+      const mainId = 'ORD-' + getTodayJalali().replace(/\//g, '').slice(2) + '-' + Math.floor(100 + Math.random() * 900);
+      orderData.id = mainId;
       appState.orders.unshift(orderData);
+
+      // ایجاد خودکار اتودها و ریسایزها در حالت دمو
+      if (Array.isArray(orderData.subOrders)) {
+        orderData.subOrders.forEach((sub, i) => {
+          appState.orders.push({
+            id: `${mainId}-SUB${i + 1}`,
+            title: sub.title || `نسخه ${i + 1}`,
+            dateOrdered: orderData.dateOrdered,
+            dateDelivered: orderData.dateDelivered,
+            type: sub.type || orderData.type,
+            formatType: sub.formatType || '',
+            status: sub.status || 'Delivered',
+            clientId: orderData.clientId,
+            clientName: orderData.clientName,
+            clientContact: orderData.clientContact,
+            parentOrderId: mainId,
+            filesLink: orderData.filesLink,
+            invoiceId: orderData.invoiceId,
+            totalFee: Number(sub.totalFee) || 0,
+            amountPaid: 0,
+            remainingFee: 0,
+            paymentStatus: sub.totalFee > 0 ? 'Unpaid' : 'Free'
+          });
+        });
+      }
     }
-    localStorage.setItem('demo_orders_v2', JSON.stringify(appState.orders));
+    localStorage.setItem('demo_orders_v3', JSON.stringify(appState.orders));
     buildClientAndInvoiceLists();
     applyFilters();
     closeOrderModal();
@@ -400,10 +757,10 @@ async function saveOrderApi(orderData, isEdit) {
       await fetchData();
       return res;
     } else {
-      throw new Error(res.error || 'خطا در سرور');
+      throw new Error(res.error || 'خطا در ثبت سفارش');
     }
   } catch (err) {
-    alert('خطا در ذخیره‌سازی: ' + err.message);
+    alert('خطا در ذخیره سفارش: ' + err.message);
   } finally {
     showLoading(false);
   }
@@ -414,7 +771,7 @@ async function deleteOrder(orderId) {
 
   if (!appState.gasUrl) {
     appState.orders = appState.orders.filter(o => o.id !== orderId);
-    localStorage.setItem('demo_orders_v2', JSON.stringify(appState.orders));
+    localStorage.setItem('demo_orders_v3', JSON.stringify(appState.orders));
     buildClientAndInvoiceLists();
     applyFilters();
     return;
@@ -461,7 +818,7 @@ function buildClientAndInvoiceLists() {
   const clientFilter = document.getElementById('clientFilter');
   if (clientFilter) {
     const currentVal = clientFilter.value;
-    clientFilter.innerHTML = '<option value="all">همه مشتریان</option>';
+    clientFilter.innerHTML = '<option value="all">همه کارفرمایان</option>';
     clientSet.forEach(name => {
       const opt = document.createElement('option');
       opt.value = name;
@@ -485,7 +842,7 @@ function setTimeframeFilter(timeframe) {
 }
 
 /**
- * اعمال فیلترها و بروزرسانی نمایش
+ * فیلترها و بروزرسانی جامع (شامل محاسبه هزینه کارهای لغوشده)
  */
 function applyFilters() {
   const search = (document.getElementById('searchInput')?.value || '').toLowerCase().trim();
@@ -503,7 +860,7 @@ function applyFilters() {
   const now = new Date();
 
   const filtered = appState.orders.filter(order => {
-    // ۱. فیلتر بازه زمانی بر اساس تاریخ دریافت شمسی
+    // ۱. فیلتر بازه زمانی
     if (appState.filters.timeframe !== 'all') {
       const orderDate = parseJalaliToDate(order.dateOrdered);
       const diffDays = (now - orderDate) / (1000 * 60 * 60 * 24);
@@ -514,13 +871,9 @@ function applyFilters() {
       if (appState.filters.timeframe === 'yearly' && diffDays > 365) return false;
     }
 
-    // ۲. فیلتر نوع رسانه
     if (type !== 'all' && order.type !== type) return false;
-
-    // ۳. فیلتر مشتری
     if (client !== 'all' && order.clientName !== client) return false;
 
-    // ۴. فیلتر وضعیت مالی
     if (finance !== 'all') {
       if (finance === 'Free' && order.paymentStatus !== 'Free') return false;
       if (finance === 'Paid' && order.paymentStatus !== 'Paid') return false;
@@ -528,10 +881,8 @@ function applyFilters() {
       if (finance === 'Unpaid' && order.paymentStatus !== 'Unpaid') return false;
     }
 
-    // ۵. فیلتر وضعیت اجرا (۳ حالت)
     if (status !== 'all' && order.status !== status) return false;
 
-    // ۶. جستجوی متنی
     if (search) {
       const matchTitle = (order.title || '').toLowerCase().includes(search);
       const matchClient = (order.clientName || '').toLowerCase().includes(search);
@@ -555,8 +906,11 @@ function applyFilters() {
 }
 
 /**
- * محاسبه و بروزرسانی کارت‌های آماری (KPIs)
- * با محاسبه ارزش کارهای دوستانه (مبلغ واقعی کارهای بدون هزینه)
+ * محاسبه شاخص‌ها شامل:
+ * ۱. درآمد وصول‌شده
+ * ۲. طلب‌های معوقه
+ * ۳. ارزش کارهای دوستانه
+ * ۴. ارزش کارهای لغو شده (هزینه کار طراحی‌شده‌ای که کارفرما لغو کرده)
  */
 function updateKpis(ordersList) {
   const totalOrders = ordersList.length;
@@ -569,6 +923,11 @@ function updateKpis(ordersList) {
   let friendlyTotalValue = 0;
   let freeCount = 0;
 
+  // شاخص کارهای لغوشده
+  let canceledCount = 0;
+  let canceledTotalFee = 0;
+  let canceledPaid = 0;
+
   ordersList.forEach(o => {
     if (o.status === 'Delivered') deliveredCount++;
     if (o.status === 'In Progress') activeCount++;
@@ -576,10 +935,15 @@ function updateKpis(ordersList) {
     const fee = Number(o.totalFee) || 0;
     const paid = Number(o.amountPaid) || 0;
     const isFree = (o.paymentStatus === 'Free');
+    const isCanceled = (o.status === 'Canceled');
 
-    if (isFree) {
+    if (isCanceled) {
+      canceledCount++;
+      canceledTotalFee += fee; // هزینه کار طراحی‌شده‌ای که لغو شده
+      canceledPaid += paid;
+    } else if (isFree) {
       freeCount++;
-      friendlyTotalValue += fee; // محاسبه چند تومان کار دوستانه انجام شده است
+      friendlyTotalValue += fee; // ارزش کار دوستانه
     } else {
       totalPaid += paid;
       if (o.paymentStatus === 'Paid') paidOrdersCount++;
@@ -603,15 +967,17 @@ function updateKpis(ordersList) {
   document.getElementById('kpiTotalReceivables').textContent = formatCurrency(totalReceivables);
   document.getElementById('kpiUnpaidCount').textContent = formatPersianNumber(unpaidCount);
 
-  // ارزش کارهای دوستانه به تومان
+  // شاخص کارهای لغوشده
+  document.getElementById('kpiCanceledValue').textContent = formatCurrency(canceledTotalFee);
+  document.getElementById('kpiCanceledCount').textContent = formatPersianNumber(canceledCount);
+  document.getElementById('kpiCanceledPaid').textContent = formatCurrency(canceledPaid);
+
+  // شاخص کارهای دوستانه
   document.getElementById('kpiFriendlyValue').textContent = formatCurrency(friendlyTotalValue);
   document.getElementById('kpiFreeOrders').textContent = formatPersianNumber(freeCount);
   document.getElementById('kpiFreePercent').textContent = formatPersianNumber(freePercent) + '٪';
 }
 
-/**
- * رندر دوگانه سفارشات: جدول دسکتاپ و کارت‌های لمسی موبایل
- */
 function renderOrders(ordersList) {
   const tbody = document.getElementById('ordersTableBody');
   const mobileContainer = document.getElementById('ordersMobileContainer');
@@ -646,7 +1012,7 @@ function renderOrders(ordersList) {
     const statusBadge = getStatusBadge(order.status);
     const paymentBadge = getPaymentBadge(order.paymentStatus, order.remainingFee, order.totalFee);
 
-    // ۱. رندر ردیف جدول برای دسکتاپ
+    // ۱. ردیف دسکتاپ
     const tr = document.createElement('tr');
     tr.className = 'hover:bg-slate-50/70 transition border-b border-slate-100';
 
@@ -668,14 +1034,14 @@ function renderOrders(ordersList) {
         ` : ''}
         ${hasChildren ? `
           <div class="mt-0.5 inline-flex items-center gap-1 text-[10px] text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded cursor-pointer hover:bg-indigo-100" onclick="filterByParent('${escapeHtml(order.id)}')">
-            <span>📑 ${formatPersianNumber(childrenCount)} نسخه مرتبط</span>
+            <span>📑 ${formatPersianNumber(childrenCount)} اتود/نسخه گروه</span>
           </div>
         ` : ''}
       </td>
 
       <td class="px-4 py-3">
         <div class="font-bold text-slate-900 text-xs">${escapeHtml(order.title)}</div>
-        ${order.parentOrderId ? `<span class="text-[10px] text-amber-600 font-medium">نسخه ریسایز / اصلاحیه</span>` : ''}
+        ${order.parentOrderId ? `<span class="text-[10px] text-amber-600 font-medium">نسخه / اتود زیرمجموعه</span>` : ''}
       </td>
 
       <td class="px-4 py-3">
@@ -714,7 +1080,7 @@ function renderOrders(ordersList) {
 
       <td class="px-4 py-3 text-center">
         <div class="flex items-center justify-center gap-1">
-          <button onclick="createVariantOrder('${escapeHtml(order.id)}')" title="ایجاد ریسایز / نسخه مرتبط" class="p-1.5 text-slate-500 hover:text-indigo-600 hover:bg-slate-100 rounded-lg transition">
+          <button onclick="createVariantOrder('${escapeHtml(order.id)}')" title="افزودن اتود / ریسایز به این سفارش" class="p-1.5 text-slate-500 hover:text-indigo-600 hover:bg-slate-100 rounded-lg transition">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2"></path></svg>
           </button>
           <button onclick="editOrder('${escapeHtml(order.id)}')" title="ویرایش" class="p-1.5 text-slate-500 hover:text-blue-600 hover:bg-slate-100 rounded-lg transition">
@@ -728,7 +1094,7 @@ function renderOrders(ordersList) {
     `;
     tbody.appendChild(tr);
 
-    // ۲. رندر کارت بهینه‌شده برای موبایل (Mobile Card View)
+    // ۲. کارت موبایل
     const card = document.createElement('div');
     card.className = 'p-4 space-y-3 bg-white hover:bg-slate-50 transition';
 
@@ -775,7 +1141,6 @@ function renderOrders(ordersList) {
         </div>
       </div>
     `;
-
     mobileContainer.appendChild(card);
   });
 }
@@ -790,11 +1155,10 @@ function filterByParent(parentId) {
 
 /**
  * =========================================================================
- * بخش ۴: نمودارهای Chart.js با پشتیبانی از کارهای دوستانه
+ * ۶. نمودارهای Chart.js
  * =========================================================================
  */
 function updateCharts(ordersList) {
-  // ۱. توزیع نوع پروژه (دیجیتال / چاپ / هردو)
   let digitalCount = 0;
   let printCount = 0;
   let bothCount = 0;
@@ -835,24 +1199,25 @@ function updateCharts(ordersList) {
     });
   }
 
-  // ۲. گزارش مالی ماهانه شمسی: درآمد، طلب و ارزش کارهای دوستانه
+  // گزارش ماهانه مالی شامل کارهای لغوشده
   const monthlyData = {};
 
   ordersList.forEach(o => {
-    // استخراج سال و ماه شمسی (مثلاً 1403/07)
     let key = 'نامشخص';
     if (o.dateOrdered && o.dateOrdered.length >= 7) {
       key = o.dateOrdered.slice(0, 7);
     }
 
     if (!monthlyData[key]) {
-      monthlyData[key] = { revenue: 0, receivables: 0, friendly: 0 };
+      monthlyData[key] = { revenue: 0, receivables: 0, friendly: 0, canceled: 0 };
     }
 
     const fee = Number(o.totalFee) || 0;
     const paid = Number(o.amountPaid) || 0;
 
-    if (o.paymentStatus === 'Free') {
+    if (o.status === 'Canceled') {
+      monthlyData[key].canceled += fee;
+    } else if (o.paymentStatus === 'Free') {
       monthlyData[key].friendly += fee;
     } else {
       monthlyData[key].revenue += paid;
@@ -864,6 +1229,7 @@ function updateCharts(ordersList) {
   const labels = Object.keys(monthlyData).sort();
   const revList = labels.map(l => monthlyData[l].revenue);
   const recList = labels.map(l => monthlyData[l].receivables);
+  const canList = labels.map(l => monthlyData[l].canceled);
   const friList = labels.map(l => monthlyData[l].friendly);
 
   const trendCtx = document.getElementById('revenueTrendChart')?.getContext('2d');
@@ -886,6 +1252,12 @@ function updateCharts(ordersList) {
             label: 'طلب‌های معوق',
             data: recList.length ? recList : [0],
             backgroundColor: '#fb7185',
+            borderRadius: 6
+          },
+          {
+            label: 'ارزش لغوشده‌ها',
+            data: canList.length ? canList : [0],
+            backgroundColor: '#f59e0b',
             borderRadius: 6
           },
           {
@@ -921,7 +1293,7 @@ function updateCharts(ordersList) {
 
 /**
  * =========================================================================
- * بخش ۵: مودال و فرم سفارش (ثبت / ویرایش)
+ * ۷. فرم ثبت و ویرایش سفارش (با ارسال اتودها و ریسایزها در یک گروه)
  * =========================================================================
  */
 function handleOrderFormSubmit(e) {
@@ -944,11 +1316,13 @@ function handleOrderFormSubmit(e) {
   const orderId = document.getElementById('formOrderId').value;
   const isEdit = Boolean(orderId);
 
+  // پالایش اتودها و ریسایزهای وارد شده در فرم
+  const validSubOrders = subOrderItemsState.filter(s => (s.title || '').trim().length > 0);
+
   const payload = {
     id: orderId || undefined,
     title: document.getElementById('formTitle').value.trim(),
     clientName: document.getElementById('formClientName').value.trim(),
-    clientContact: document.getElementById('formClientContact').value.trim(),
     type: document.getElementById('formType').value,
     formatType: document.getElementById('formFormatType').value.trim(),
     dateOrdered: document.getElementById('formDateOrdered').value.trim(),
@@ -961,7 +1335,8 @@ function handleOrderFormSubmit(e) {
     remainingFee: remaining,
     paymentStatus: paymentStatus,
     isFree: isFree,
-    filesLink: document.getElementById('formFilesLink').value.trim()
+    filesLink: document.getElementById('formFilesLink').value.trim(),
+    subOrders: validSubOrders // ارسال لیست اتودها و ریسایزها جهت ثبت در یک گروه
   };
 
   saveOrderApi(payload, isEdit);
@@ -970,11 +1345,21 @@ function handleOrderFormSubmit(e) {
 function openOrderModal() {
   document.getElementById('orderForm').reset();
   document.getElementById('formOrderId').value = '';
-  document.getElementById('orderModalTitle').textContent = 'ثبت سفارش جدید';
+  document.getElementById('orderModalTitle').textContent = 'ثبت سفارش و پروژه‌های گروهی';
   document.getElementById('formDateOrdered').value = getTodayJalali();
   document.getElementById('formDateDelivered').value = '';
   document.getElementById('formIsFree').checked = false;
   toggleFreeOrder(false);
+
+  // ریست اینپوت‌های جداسازی سه رقمی
+  setFormattedCurrency('formTotalFeeFormatted', 'formTotalFee', 0);
+  setFormattedCurrency('formAmountPaidFormatted', 'formAmountPaid', 0);
+
+  // پاک کردن و نمایش بخش اتودها
+  subOrderItemsState = [];
+  renderSubOrdersList();
+  document.getElementById('subOrdersContainerWrapper').classList.remove('hidden');
+
   buildClientAndInvoiceLists();
   document.getElementById('orderModal').classList.remove('hidden');
 }
@@ -983,10 +1368,9 @@ function createVariantOrder(parentOrderId) {
   const parent = appState.orders.find(o => o.id === parentOrderId);
   openOrderModal();
   if (parent) {
-    document.getElementById('orderModalTitle').textContent = `افزودن ریسایز / نسخه وابسته به (${parent.title})`;
+    document.getElementById('orderModalTitle').textContent = `افزودن ریسایز / نسخه جدید به (${parent.title})`;
     document.getElementById('formParentOrderId').value = parent.id;
     document.getElementById('formClientName').value = parent.clientName || '';
-    document.getElementById('formClientContact').value = parent.clientContact || '';
     document.getElementById('formTitle').value = `ریسایز: ${parent.title}`;
     document.getElementById('formInvoiceId').value = parent.invoiceId || '';
   }
@@ -1001,27 +1385,25 @@ function editOrder(orderId) {
   document.getElementById('orderModalTitle').textContent = `ویرایش سفارش (${order.id})`;
   document.getElementById('formTitle').value = order.title || '';
   document.getElementById('formClientName').value = order.clientName || '';
-  document.getElementById('formClientContact').value = order.clientContact || '';
   document.getElementById('formType').value = order.type || 'Digital';
-  document.getElementById('formFormatType').value = order.formatType || order.formatSize || '';
+  document.getElementById('formFormatType').value = order.formatType || '';
   document.getElementById('formDateOrdered').value = order.dateOrdered || '';
   document.getElementById('formDateDelivered').value = order.dateDelivered || '';
-  
-  // نگاشت وضعیت به ۳ حالت درخواستی
-  let st = order.status;
-  if (st === 'Completed') st = 'Delivered';
-  else if (st === 'Review') st = 'In Progress';
-  document.getElementById('formStatus').value = st || 'In Progress';
+  document.getElementById('formStatus').value = order.status || 'In Progress';
 
   document.getElementById('formParentOrderId').value = order.parentOrderId || '';
   document.getElementById('formInvoiceId').value = order.invoiceId || '';
-  document.getElementById('formTotalFee').value = order.totalFee || 0;
-  document.getElementById('formAmountPaid').value = order.amountPaid || 0;
   document.getElementById('formFilesLink').value = order.filesLink || '';
+
+  setFormattedCurrency('formTotalFeeFormatted', 'formTotalFee', order.totalFee || 0);
+  setFormattedCurrency('formAmountPaidFormatted', 'formAmountPaid', order.amountPaid || 0);
 
   const isFree = (order.paymentStatus === 'Free');
   document.getElementById('formIsFree').checked = isFree;
   toggleFreeOrder(isFree);
+
+  // در حالت ادیت، اتودهای قبلی قبلاً در جدول هستند؛ بخش افزودن چندتایی جدید را مخفی کن
+  document.getElementById('subOrdersContainerWrapper').classList.add('hidden');
 
   document.getElementById('orderModal').classList.remove('hidden');
 }
@@ -1030,27 +1412,23 @@ function closeOrderModal() {
   document.getElementById('orderModal').classList.add('hidden');
 }
 
-/**
- * فعال/غیرفعال کردن حالت دوستانه
- * ارزش کار همچنان قابل وارد کردن است اما مبلغ دریافتی صفر می‌شود
- */
 function toggleFreeOrder(isFree) {
-  const paidInput = document.getElementById('formAmountPaid');
+  const paidFormattedInput = document.getElementById('formAmountPaidFormatted');
   const labelFee = document.getElementById('labelTotalFee');
   const hintFee = document.getElementById('hintTotalFee');
   const hintPaid = document.getElementById('hintAmountPaid');
 
   if (isFree) {
-    paidInput.value = 0;
-    paidInput.disabled = true;
-    paidInput.classList.add('bg-slate-100', 'text-slate-400');
-    labelFee.textContent = 'ارزش واقعی / تخمینی کار دوستانه (تومان)';
-    hintFee.textContent = 'این مبلغ جهت ثبت چند تومان کار دوستانه در آمار محاسبه می‌شود.';
-    hintPaid.textContent = 'در کارهای دوستانه دریافت وجه صفر منظور می‌گردد.';
+    setFormattedCurrency('formAmountPaidFormatted', 'formAmountPaid', 0);
+    paidFormattedInput.disabled = true;
+    paidFormattedInput.classList.add('bg-slate-100', 'text-slate-400');
+    labelFee.textContent = 'ارزش تخمینی کار دوستانه (تومان)';
+    hintFee.textContent = 'جهت ثبت در آمار چند تومان کار دوستانه محاسبه می‌شود.';
+    hintPaid.textContent = 'دریافت وجه در کارهای دوستانه صفر است.';
   } else {
-    paidInput.disabled = false;
-    paidInput.classList.remove('bg-slate-100', 'text-slate-400');
-    labelFee.textContent = 'مبلغ کل هزینه پروژه (تومان) *';
+    paidFormattedInput.disabled = false;
+    paidFormattedInput.classList.remove('bg-slate-100', 'text-slate-400');
+    labelFee.textContent = 'مبلغ / ارزش کل کار (تومان) *';
     hintFee.textContent = 'ارزش کل سفارش توافق‌شده با مشتری.';
     hintPaid.textContent = 'مبلغ واریزی تا این لحظه.';
   }
@@ -1058,12 +1436,13 @@ function toggleFreeOrder(isFree) {
 
 /**
  * =========================================================================
- * بخش ۶: تنظیمات URL و توابع کمکی
+ * ۸. تنظیمات و توابع کمکی
  * =========================================================================
  */
 function openSettingsModal() {
   document.getElementById('gasUrlInput').value = appState.gasUrl;
-  document.getElementById('newPasscodeInput').value = '';
+  document.getElementById('currentPassInput').value = '';
+  document.getElementById('newPassInput').value = '';
   document.getElementById('settingsModal').classList.remove('hidden');
 }
 
@@ -1102,6 +1481,38 @@ function formatCurrency(n) {
   return Number(n).toLocaleString('fa-IR');
 }
 
+function normalizeToJalali(dateStr) {
+  if (!dateStr) return '';
+  dateStr = dateStr.toString().trim();
+  if (dateStr.startsWith('13') || dateStr.startsWith('14')) {
+    return dateStr.replace(/-/g, '/');
+  }
+  if (dateStr.includes('-') || dateStr.includes('/')) {
+    const parts = dateStr.split(/[-/T ]/);
+    if (parts.length >= 3 && parts[0].length === 4) {
+      const gy = parseInt(parts[0], 10);
+      const gm = parseInt(parts[1], 10);
+      const gd = parseInt(parts[2], 10);
+      if (gy > 1900 && gm >= 1 && gm <= 12 && gd >= 1 && gd <= 31) {
+        const [jy, jm, jd] = gregorianToJalali(gy, gm, gd);
+        const pad = n => String(n).padStart(2, '0');
+        return `${jy}/${pad(jm)}/${pad(jd)}`;
+      }
+    }
+  }
+  return dateStr;
+}
+
+function parseJalaliToDate(jalaliStr) {
+  if (!jalaliStr) return new Date();
+  const parts = jalaliStr.split('/');
+  if (parts.length === 3) {
+    const [gy, gm, gd] = jalaliToGregorian(parseInt(parts[0], 10), parseInt(parts[1], 10), parseInt(parts[2], 10));
+    return new Date(gy, gm - 1, gd);
+  }
+  return new Date();
+}
+
 function getTypeBadge(type) {
   if (type === 'Print') {
     return `<span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-pink-50 text-pink-700 border border-pink-200">چاپ</span>`;
@@ -1114,13 +1525,11 @@ function getTypeBadge(type) {
 function getStatusBadge(status) {
   switch (status) {
     case 'In Progress':
-    case 'Review':
       return `<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-amber-50 text-amber-700 border border-amber-200">در حال انجام</span>`;
     case 'Delivered':
-    case 'Completed':
       return `<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">تحویل داده شده</span>`;
     case 'Canceled':
-      return `<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-rose-50 text-rose-700 border border-rose-200">لغو شده</span>`;
+      return `<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-rose-50 text-rose-700 border border-rose-200" title="لغو شده توسط کارفرما">لغو شده</span>`;
     default:
       return `<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-slate-100 text-slate-700">در حال انجام</span>`;
   }
