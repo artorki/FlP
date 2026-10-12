@@ -34,7 +34,7 @@
 <body class="bg-slate-50 text-slate-800 antialiased min-h-screen pb-12 select-none">
 
   <!-- ======================================================== -->
-  <!-- صفحه لاگین و احراز هویت امن (Passcode Lock Screen) -->
+  <!-- صفحه لاگین و احراز هویت امن سمت دیتابیس (Secure Login Screen) -->
   <!-- ======================================================== -->
   <div id="loginScreen" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/90 backdrop-blur-md p-4 transition-all duration-300">
     <div class="bg-white w-full max-w-sm rounded-3xl p-6 sm:p-8 shadow-2xl border border-slate-100 text-center space-y-6">
@@ -46,20 +46,21 @@
 
       <div>
         <h2 class="text-xl font-bold text-slate-900">ورود به پنل سفارشات</h2>
-        <p class="text-xs text-slate-500 mt-1">رمز عبور امنیتی خود را وارد کنید</p>
+        <p class="text-xs text-slate-500 mt-1">احراز هویت ایمن با رمز عبور ذخیره‌شده در سرور</p>
       </div>
 
       <form id="loginForm" onsubmit="handleLoginSubmit(event)" class="space-y-4">
         <div>
           <input type="password" id="loginPinInput" autofocus placeholder="رمز عبور" class="w-full text-center tracking-widest text-lg py-3 px-4 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 font-mono">
         </div>
-        <div id="loginError" class="text-xs text-rose-600 font-medium hidden">رمز عبور وارد شده نادرست است!</div>
-        <button type="submit" class="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl shadow-md shadow-indigo-200 transition text-sm">
-          ورود به پنل
+        <div id="loginError" class="text-xs text-rose-600 font-medium hidden">رمز عبور نادرست است!</div>
+        <button type="submit" id="loginSubmitBtn" class="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl shadow-md shadow-indigo-200 transition text-sm flex items-center justify-center gap-2">
+          <span>ورود به پنل</span>
+          <span id="loginSpinner" class="hidden w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
         </button>
       </form>
 
-      <p class="text-[11px] text-slate-400">رمز اولیه: <code class="font-mono bg-slate-100 px-1.5 py-0.5 rounded text-slate-600">1234</code> (قابل تغییر در تنظیمات)</p>
+      <p class="text-[11px] text-slate-400">رمز عبور در سرور گوگل هش شده و در فرانت‌اند یا کلاینت قابل رویت نیست.</p>
     </div>
   </div>
 
@@ -67,7 +68,7 @@
   <!-- بدنه اصلی برنامه پس از لاگین -->
   <!-- ======================================================== -->
   <div id="appContainer" class="hidden">
-    <!-- هدر واکنش‌گرا و مدرن -->
+    <!-- هدر واکنش‌گرا -->
     <header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-sm">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
         <!-- لوگو و عنوان -->
@@ -79,26 +80,23 @@
           </div>
           <div>
             <h1 class="text-base sm:text-lg font-bold text-slate-900 leading-tight">استودیو طراحی شخصی</h1>
-            <p class="text-[11px] sm:text-xs text-slate-500">مدیریت سفارشات، درآمد و کارهای دوستانه</p>
+            <p class="text-[11px] sm:text-xs text-slate-500">مدیریت سفارشات، درآمد، کارهای لغوشده و دوستانه</p>
           </div>
         </div>
 
         <!-- کنترل‌های بالای صفحه -->
         <div class="flex items-center gap-1.5 sm:gap-2">
-          <!-- نشانگر اتصال به بک‌اند -->
-          <div id="connectionStatusBadge" class="hidden md:flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-amber-50 text-amber-700 border border-amber-200 cursor-pointer" onclick="openSettingsModal()" title="کلیک برای تنظیمات API">
+          <div id="connectionStatusBadge" class="hidden md:flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-amber-50 text-amber-700 border border-amber-200 cursor-pointer" onclick="openSettingsModal()" title="تنظیمات API">
             <span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
             <span id="connectionStatusText">حالت دمو</span>
           </div>
 
-          <!-- دکمه رفرش -->
           <button onclick="fetchData()" id="refreshBtn" class="p-2 text-slate-600 hover:text-indigo-600 hover:bg-slate-100 rounded-lg transition" title="بروزرسانی داده‌ها">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
             </svg>
           </button>
 
-          <!-- دکمه تنظیمات -->
           <button onclick="openSettingsModal()" class="p-2 text-slate-600 hover:text-indigo-600 hover:bg-slate-100 rounded-lg transition" title="تنظیمات">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
@@ -106,19 +104,17 @@
             </svg>
           </button>
 
-          <!-- دکمه خروج -->
           <button onclick="handleLogout()" class="p-2 text-slate-500 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition" title="خروج از حساب">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
             </svg>
           </button>
 
-          <!-- دکمه ثبت سفارش جدید -->
           <button onclick="openOrderModal()" class="flex items-center gap-1.5 bg-indigo-600 hover:bg-indigo-700 text-white px-3 sm:px-4 py-2 rounded-xl font-medium text-xs sm:text-sm shadow-sm transition shadow-indigo-200">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
             </svg>
-            <span class="hidden xs:inline">ثبت سفارش</span>
+            <span class="hidden xs:inline">ثبت سفارش جدید</span>
           </button>
         </div>
       </div>
@@ -127,8 +123,8 @@
     <!-- محتوای اصلی -->
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5 space-y-5">
 
-      <!-- کارت‌های شاخص‌های کلیدی (KPIs) - بهینه‌شده برای موبایل و دسکتاپ -->
-      <section class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+      <!-- کارت‌های شاخص عملکرد (KPIs) شامل کارهای لغوشده و دوستانه -->
+      <section class="grid grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4">
         <!-- تعداد سفارشات -->
         <div class="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/80 card-shadow card-hover">
           <div class="flex items-center justify-between text-slate-500 mb-1.5">
@@ -149,7 +145,7 @@
           </div>
         </div>
 
-        <!-- درآمد کل وصول‌شده -->
+        <!-- درآمد وصول‌شده -->
         <div class="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/80 card-shadow card-hover">
           <div class="flex items-center justify-between text-slate-500 mb-1.5">
             <span class="text-[11px] sm:text-xs font-semibold">درآمد وصول‌شده</span>
@@ -164,11 +160,11 @@
             <span class="text-[11px] text-slate-500">تومان</span>
           </div>
           <div class="mt-2 text-[11px] text-slate-500">
-            <span>تسویه کامل: <strong id="kpiPaidOrdersCount" class="text-slate-700">۰</strong> سفارش</span>
+            <span>تسویه کامل: <strong id="kpiPaidOrdersCount" class="text-slate-700">۰</strong> مورد</span>
           </div>
         </div>
 
-        <!-- طلب‌ها و مبالغ معوق -->
+        <!-- طلب‌ها و معوقات -->
         <div class="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/80 card-shadow card-hover">
           <div class="flex items-center justify-between text-slate-500 mb-1.5">
             <span class="text-[11px] sm:text-xs font-semibold">طلب‌ها و معوقات</span>
@@ -183,14 +179,34 @@
             <span class="text-[11px] text-slate-500">تومان</span>
           </div>
           <div class="mt-2 text-[11px] text-slate-500">
-            <span>تعداد مطالبات: <strong id="kpiUnpaidCount" class="text-slate-700">۰</strong> مورد</span>
+            <span>تعداد مطالبات: <strong id="kpiUnpaidCount" class="text-slate-700">۰</strong> فقره</span>
+          </div>
+        </div>
+
+        <!-- هزینه و ارزش سفارش‌های لغوشده (محاسبه هزینه طراحی کارفرماهای کنسلی) -->
+        <div class="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/80 card-shadow card-hover">
+          <div class="flex items-center justify-between text-slate-500 mb-1.5">
+            <span class="text-[11px] sm:text-xs font-semibold text-amber-800">ارزش سفارش‌های لغوشده</span>
+            <span class="p-1.5 rounded-lg bg-amber-50 text-amber-600">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"></path>
+              </svg>
+            </span>
+          </div>
+          <div class="flex items-baseline gap-1">
+            <span id="kpiCanceledValue" class="text-xl sm:text-2xl font-extrabold text-amber-600">۰</span>
+            <span class="text-[11px] text-slate-500">تومان</span>
+          </div>
+          <div class="mt-2 text-[11px] text-slate-500 flex justify-between">
+            <span>تعداد: <strong id="kpiCanceledCount" class="text-amber-800">۰</strong> کار کنسل‌شده</span>
+            <span>دریافتی: <strong id="kpiCanceledPaid">۰</strong></span>
           </div>
         </div>
 
         <!-- ارزش کارهای دوستانه / رایگان -->
-        <div class="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/80 card-shadow card-hover">
+        <div class="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/80 card-shadow card-hover col-span-2 lg:col-span-1">
           <div class="flex items-center justify-between text-slate-500 mb-1.5">
-            <span class="text-[11px] sm:text-xs font-semibold">ارزش کارهای دوستانه</span>
+            <span class="text-[11px] sm:text-xs font-semibold text-purple-800">ارزش کارهای دوستانه</span>
             <span class="p-1.5 rounded-lg bg-purple-50 text-purple-600">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
@@ -202,13 +218,13 @@
             <span class="text-[11px] text-slate-500">تومان</span>
           </div>
           <div class="mt-2 text-[11px] text-slate-500 flex justify-between">
-            <span>تعداد: <strong id="kpiFreeOrders" class="text-purple-700">۰</strong> کار دوستانه</span>
+            <span>تعداد: <strong id="kpiFreeOrders" class="text-purple-700">۰</strong> سفارش دوستانه</span>
             <span>(<span id="kpiFreePercent">۰٪</span>)</span>
           </div>
         </div>
       </section>
 
-      <!-- بخش فیلترهای پیشرفته و بازه‌های زمانی (شمسی) -->
+      <!-- نوار فیلترهای پیشرفته و بازه‌های زمانی -->
       <section class="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/80 card-shadow space-y-4">
         <!-- ردیف انتخاب بازه زمانی -->
         <div class="flex flex-wrap items-center justify-between gap-2 sm:gap-3 pb-3 border-b border-slate-100">
@@ -228,13 +244,11 @@
 
         <!-- فیلترهای چندبعدی -->
         <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-2.5 sm:gap-3">
-          <!-- جستجو -->
           <div>
             <label class="block text-xs font-medium text-slate-600 mb-1">جستجو</label>
             <input type="text" id="searchInput" oninput="applyFilters()" placeholder="عنوان، قالب، کارفرما، فاکتور..." class="w-full text-xs px-3 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500">
           </div>
 
-          <!-- فیلتر نوع (دیجیتال/چاپ) -->
           <div>
             <label class="block text-xs font-medium text-slate-600 mb-1">نوع رسانه</label>
             <select id="typeFilter" onchange="applyFilters()" class="w-full text-xs px-3 py-2 rounded-xl border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500">
@@ -245,15 +259,13 @@
             </select>
           </div>
 
-          <!-- فیلتر مشتری -->
           <div>
-            <label class="block text-xs font-medium text-slate-600 mb-1">مشتری / آشنا</label>
+            <label class="block text-xs font-medium text-slate-600 mb-1">سفارش‌دهنده / کارفرما</label>
             <select id="clientFilter" onchange="applyFilters()" class="w-full text-xs px-3 py-2 rounded-xl border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500">
-              <option value="all">همه مشتریان</option>
+              <option value="all">همه کارفرمایان</option>
             </select>
           </div>
 
-          <!-- فیلتر وضعیت مالی -->
           <div>
             <label class="block text-xs font-medium text-slate-600 mb-1">وضعیت مالی</label>
             <select id="financeFilter" onchange="applyFilters()" class="w-full text-xs px-3 py-2 rounded-xl border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500">
@@ -265,7 +277,6 @@
             </select>
           </div>
 
-          <!-- فیلتر وضعیت اجرا (فقط ۳ وضعیت) -->
           <div>
             <label class="block text-xs font-medium text-slate-600 mb-1">وضعیت سفارش</label>
             <select id="statusFilter" onchange="applyFilters()" class="w-full text-xs px-3 py-2 rounded-xl border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500">
@@ -278,9 +289,8 @@
         </div>
       </section>
 
-      <!-- بخش نمودارهای تحلیلی و فصلی (Chart.js) -->
+      <!-- نمودارهای Chart.js -->
       <section class="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-5">
-        <!-- نمودار دایره‌ای: سهم چاپ / دیجیتال -->
         <div class="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/80 card-shadow flex flex-col">
           <div class="flex items-center justify-between mb-3">
             <div>
@@ -294,16 +304,16 @@
           </div>
         </div>
 
-        <!-- نمودار میله‌ای مالی: درآمد، طلب و کارهای دوستانه -->
         <div class="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/80 card-shadow lg:col-span-2 flex flex-col">
           <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
             <div>
-              <h3 class="text-xs sm:text-sm font-bold text-slate-900">جریان مالی و ارزش کارها (شمسی)</h3>
-              <p class="text-[11px] text-slate-500">درآمد وصول‌شده، طلب‌ها و ارزش کارهای دوستانه</p>
+              <h3 class="text-xs sm:text-sm font-bold text-slate-900">جریان مالی و درآمدی در ماه‌های شمسی</h3>
+              <p class="text-[11px] text-slate-500">درآمد وصول‌شده، طلب‌ها، کارهای لغوشده و دوستانه</p>
             </div>
             <div class="flex items-center gap-3 text-[11px]">
               <div class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span><span>درآمد</span></div>
               <div class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-rose-400"></span><span>طلب</span></div>
+              <div class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span><span>لغوشده</span></div>
               <div class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-purple-500"></span><span>دوستانه</span></div>
             </div>
           </div>
@@ -313,19 +323,18 @@
         </div>
       </section>
 
-      <!-- جدول و کارت‌های لیست سفارشات -->
+      <!-- جدول دسکتاپ و کارت‌های لمسی موبایل -->
       <section class="bg-white rounded-2xl border border-slate-200/80 card-shadow overflow-hidden">
         <div class="p-3.5 sm:p-4 border-b border-slate-100 flex flex-wrap items-center justify-between gap-2">
           <div class="flex items-center gap-2">
-            <h2 class="text-xs sm:text-sm font-bold text-slate-900">لیست سفارشات</h2>
+            <h2 class="text-xs sm:text-sm font-bold text-slate-900">لیست جامع سفارشات</h2>
             <span id="orderCountPill" class="text-xs px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-600 font-semibold">۰ مورد</span>
           </div>
           <div class="text-[11px] text-slate-400">
-            تاریخ‌ها بر اساس تقویم خورشیدی (شمسی)
+            قابلیت مشاهده تمام اتودها، ریسایزها و پیوندهای گروهی
           </div>
         </div>
 
-        <!-- نمایش بهینه‌شده جدول برای دسکتاپ و کارت‌ها برای موبایل -->
         <div class="hidden md:block table-container">
           <table class="w-full text-xs text-right">
             <thead class="bg-slate-50/80 text-slate-600 uppercase border-b border-slate-200/60 font-semibold">
@@ -347,26 +356,23 @@
           </table>
         </div>
 
-        <!-- کارت‌های موبایل (برای نمایش در گوشی و تبلت) -->
         <div id="ordersMobileContainer" class="md:hidden divide-y divide-slate-100">
-          <!-- کارت‌های موبایل اینجا رندر می‌شوند -->
+          <!-- کارت‌های موبایل -->
         </div>
 
-        <!-- وضعیت خالی بودن جدول -->
         <div id="emptyState" class="hidden p-10 text-center">
           <div class="w-12 h-12 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center mx-auto mb-2">
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path>
             </svg>
           </div>
-          <p class="text-xs sm:text-sm font-medium text-slate-700">هیچ سفارشی با این مشخصات یافت نشد!</p>
-          <p class="text-[11px] text-slate-400 mt-0.5">فیلترها را تغییر دهید یا سفارش جدید ثبت کنید.</p>
+          <p class="text-xs sm:text-sm font-medium text-slate-700">هیچ سفارشی یافت نشد!</p>
+          <p class="text-[11px] text-slate-400 mt-0.5">فیلترها را تنظیم کنید یا سفارش جدیدی بیافزایید.</p>
         </div>
 
-        <!-- حالت لودینگ -->
         <div id="loadingState" class="hidden p-10 text-center">
           <div class="inline-block w-7 h-7 border-3 border-indigo-600 border-t-transparent rounded-full animate-spin mb-2"></div>
-          <p class="text-xs text-slate-500 font-medium">در حال ارتباط با سرور...</p>
+          <p class="text-xs text-slate-500 font-medium">در حال همگام‌سازی اطلاعات...</p>
         </div>
       </section>
 
@@ -374,14 +380,60 @@
   </div>
 
   <!-- ======================================================== -->
-  <!-- مودال ثبت / ویرایش سفارش (Order Form Modal) -->
+  <!-- باکس بازشونده تقویم شمسی هوشمند (Interactive Jalali Date Picker) -->
+  <!-- ======================================================== -->
+  <div id="jalaliPickerModal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 modal-backdrop">
+    <div class="bg-white rounded-3xl w-full max-w-xs shadow-2xl border border-slate-100 p-5 space-y-4 animate-scaleUp">
+      <!-- هدر تقویم با انتخابگر ماه و سال -->
+      <div class="flex items-center justify-between pb-2 border-b border-slate-100">
+        <button type="button" onclick="jalaliPickerPrevMonth()" class="p-1.5 rounded-xl hover:bg-slate-100 text-slate-600 transition" title="ماه قبل">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+        </button>
+        <div class="text-center">
+          <span id="pickerMonthName" class="font-bold text-slate-900 text-sm">مهر</span>
+          <span id="pickerYearNum" class="font-mono text-slate-600 text-sm font-bold mr-1">۱۴۰۳</span>
+        </div>
+        <button type="button" onclick="jalaliPickerNextMonth()" class="p-1.5 rounded-xl hover:bg-slate-100 text-slate-600 transition" title="ماه بعد">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+        </button>
+      </div>
+
+      <!-- نام روزهای هفته -->
+      <div class="grid grid-cols-7 gap-1 text-center text-[11px] font-bold text-slate-400">
+        <div>ش</div>
+        <div>ی</div>
+        <div>د</div>
+        <div>س</div>
+        <div>چ</div>
+        <div>پ</div>
+        <div class="text-rose-500">ج</div>
+      </div>
+
+      <!-- شبکه روزهای ماه -->
+      <div id="pickerDaysGrid" class="grid grid-cols-7 gap-1 text-center text-xs">
+        <!-- روزها توسط جاوا اسکریپت درج می‌شوند -->
+      </div>
+
+      <!-- دکمه‌های پایانی -->
+      <div class="pt-2 border-t border-slate-100 flex items-center justify-between text-xs">
+        <button type="button" onclick="jalaliPickerSelectToday()" class="px-3 py-1.5 rounded-xl bg-indigo-50 text-indigo-700 hover:bg-indigo-100 font-medium transition">امروز</button>
+        <div class="flex items-center gap-1.5">
+          <button type="button" onclick="jalaliPickerClear()" class="px-2.5 py-1.5 text-slate-400 hover:text-rose-600 transition">پاک کردن</button>
+          <button type="button" onclick="closeJalaliPicker()" class="px-3 py-1.5 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 transition">بستن</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================================================== -->
+  <!-- مودال ثبت سفارش (شامل پروژه اصلی و ثبت همزمان اتودها/ریسایزها) -->
   <!-- ======================================================== -->
   <div id="orderModal" class="fixed inset-0 z-50 hidden flex items-end sm:items-center justify-center p-0 sm:p-4 modal-backdrop">
-    <div class="bg-white rounded-t-3xl sm:rounded-2xl w-full max-w-2xl max-h-[92vh] overflow-y-auto shadow-2xl border border-slate-100">
+    <div class="bg-white rounded-t-3xl sm:rounded-2xl w-full max-w-3xl max-h-[92vh] overflow-y-auto shadow-2xl border border-slate-100">
       <div class="p-4 sm:p-5 border-b border-slate-100 flex items-center justify-between sticky top-0 bg-white z-10">
         <div>
-          <h3 id="orderModalTitle" class="text-sm sm:text-base font-bold text-slate-900">ثبت سفارش جدید</h3>
-          <p class="text-[11px] text-slate-500">ثبت مشخصات کار، قالب، تاریخ شمسی و امور مالی</p>
+          <h3 id="orderModalTitle" class="text-sm sm:text-base font-bold text-slate-900">ثبت سفارش و پروژه‌های گروهی</h3>
+          <p class="text-[11px] text-slate-500">ثبت کار اصلی به همراه اتودها، ریسایزها و نسخه‌ها در یک گروه واحد</p>
         </div>
         <button onclick="closeOrderModal()" class="text-slate-400 hover:text-slate-600 p-1.5 rounded-lg hover:bg-slate-100 transition">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -393,75 +445,92 @@
       <form id="orderForm" onsubmit="handleOrderFormSubmit(event)" class="p-4 sm:p-5 space-y-4 text-xs">
         <input type="hidden" id="formOrderId">
 
-        <!-- عنوان و سفارش‌دهنده -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-          <div>
-            <label class="block font-medium text-slate-700 mb-1">عنوان سفارش / موضوع طراحی *</label>
-            <input type="text" id="formTitle" required placeholder="مثال: طراحی پوستر همایش، لوگوی آلفا..." class="w-full px-3 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500">
+        <!-- بخش الف: پروژه اصلی -->
+        <div class="p-3.5 bg-slate-50/70 rounded-2xl border border-slate-200/80 space-y-3">
+          <div class="flex items-center justify-between">
+            <span class="font-bold text-slate-900 text-xs sm:text-sm">۱. مشخصات پروژه اصلی</span>
+            <span class="text-[11px] text-indigo-600 font-semibold bg-indigo-50 px-2 py-0.5 rounded-lg">کار پایه</span>
           </div>
-          <div>
-            <label class="block font-medium text-slate-700 mb-1">سفارش‌دهنده / نام شخص یا برند *</label>
-            <input type="text" id="formClientName" required placeholder="مثال: دوست/آشنا، شرکت صبا، آقای علوی..." class="w-full px-3 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500">
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label class="block font-medium text-slate-700 mb-1">عنوان سفارش اصلی *</label>
+              <input type="text" id="formTitle" required placeholder="مثال: طراحی پوستر دوره آموزشی نجوم" class="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500">
+            </div>
+            <div>
+              <label class="block font-medium text-slate-700 mb-1">سفارش‌دهنده / کارفرما *</label>
+              <input type="text" id="formClientName" required placeholder="مثال: آکادمی فضایی، دکتر نجفی..." class="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500">
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div>
+              <label class="block font-medium text-slate-700 mb-1">نوع رسانه *</label>
+              <select id="formType" class="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500">
+                <option value="Digital">دیجیتال</option>
+                <option value="Print">چاپ</option>
+                <option value="Both">هر دو</option>
+              </select>
+            </div>
+            <div>
+              <label class="block font-medium text-slate-700 mb-1">قالب پروژه</label>
+              <input type="text" id="formFormatType" placeholder="مثال: پوستر، دیوارنگاره، لایت‌باکس..." class="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500">
+            </div>
+            <div>
+              <label class="block font-medium text-slate-700 mb-1">وضعیت سفارش اصلی *</label>
+              <select id="formStatus" class="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 font-semibold">
+                <option value="In Progress">در حال انجام</option>
+                <option value="Delivered">تحویل داده شده</option>
+                <option value="Canceled">لغو شده (کنسلی کارفرما)</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- تاریخ‌ها با دکمه باز شدن تقویم شمسی -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label class="block font-medium text-slate-700 mb-1">تاریخ دریافت سفارش (شمسی) *</label>
+              <div class="relative">
+                <input type="text" id="formDateOrdered" readonly required onclick="openJalaliPicker('formDateOrdered')" placeholder="انتخاب از تقویم" class="w-full px-3 py-2 pl-9 rounded-xl border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 font-mono cursor-pointer">
+                <button type="button" onclick="openJalaliPicker('formDateOrdered')" class="absolute left-2.5 top-2.5 text-indigo-600 hover:text-indigo-800 transition" title="باز کردن تقویم">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                </button>
+              </div>
+            </div>
+            <div>
+              <label class="block font-medium text-slate-700 mb-1">تاریخ تحویل داده شده (شمسی)</label>
+              <div class="relative">
+                <input type="text" id="formDateDelivered" readonly onclick="openJalaliPicker('formDateDelivered')" placeholder="انتخاب از تقویم (اختیاری)" class="w-full px-3 py-2 pl-9 rounded-xl border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 font-mono cursor-pointer">
+                <button type="button" onclick="openJalaliPicker('formDateDelivered')" class="absolute left-2.5 top-2.5 text-indigo-600 hover:text-indigo-800 transition" title="باز کردن تقویم">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                </button>
+              </div>
+            </div>
           </div>
         </div>
 
-        <!-- نوع، قالب پروژه و تماس -->
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
-          <div>
-            <label class="block font-medium text-slate-700 mb-1">نوع رسانه *</label>
-            <select id="formType" class="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500">
-              <option value="Digital">دیجیتال (سوشیال، وب)</option>
-              <option value="Print">چاپ (افست، بنر)</option>
-              <option value="Both">هر دو (دیجیتال و چاپ)</option>
-            </select>
+        <!-- بخش ب: افزودن اتودها، ریسایزها و نسخه‌های فرعی در همین فرم -->
+        <div id="subOrdersContainerWrapper" class="p-3.5 bg-slate-50/70 rounded-2xl border border-slate-200/80 space-y-3">
+          <div class="flex items-center justify-between">
+            <div>
+              <span class="font-bold text-slate-900 text-xs sm:text-sm">۲. نسخه‌های مرتبط، اتودها و ریسایزها</span>
+              <p class="text-[11px] text-slate-500">اگر چند پوستر رد شده یا چند ریسایز زده‌اید، در همینجا جداگانه بیافزایید تا در یک گروه قرار گیرند.</p>
+            </div>
+            <button type="button" onclick="addSubOrderItem()" class="inline-flex items-center gap-1 bg-white hover:bg-slate-100 text-indigo-600 border border-indigo-200 px-3 py-1.5 rounded-xl font-bold text-xs transition shadow-sm">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+              <span>+ افزودن نسخه / اتود / ریسایز</span>
+            </button>
           </div>
-          <div>
-            <label class="block font-medium text-slate-700 mb-1">قالب و قطع پروژه</label>
-            <input type="text" id="formFormatType" placeholder="مثال: پوستر، دیوارنگاره، لایت‌باکس، بنر..." class="w-full px-3 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500">
-          </div>
-          <div>
-            <label class="block font-medium text-slate-700 mb-1">اطلاعات تماس (اختیاری)</label>
-            <input type="text" id="formClientContact" placeholder="شماره تماس یا آیدی" class="w-full px-3 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500">
+
+          <div id="subOrdersList" class="space-y-2">
+            <!-- ردیف‌های پویای نسخه‌ها در اینجا افزوده می‌شوند -->
           </div>
         </div>
 
-        <!-- تاریخ‌ها (شمسی) -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-          <div>
-            <label class="block font-medium text-slate-700 mb-1">تاریخ دریافت سفارش (شمسی) *</label>
-            <input type="text" id="formDateOrdered" required pattern="[1-4][0-9]{3}/[0-1][0-9]/[0-3][0-9]" placeholder="مثال: 1403/07/21" class="w-full px-3 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 font-mono">
-            <span class="text-[10px] text-slate-400 mt-0.5 block">فرمت استاندارد: سال/ماه/روز (مانند 1403/07/21)</span>
-          </div>
-          <div>
-            <label class="block font-medium text-slate-700 mb-1">تاریخ تحویل داده شده (شمسی)</label>
-            <input type="text" id="formDateDelivered" pattern="[1-4][0-9]{3}/[0-1][0-9]/[0-3][0-9]" placeholder="مثال: 1403/07/28" class="w-full px-3 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 font-mono">
-            <span class="text-[10px] text-slate-400 mt-0.5 block">در صورت تحویل شدن وارد نمایید</span>
-          </div>
-        </div>
-
-        <!-- وضعیت سفارش (فقط ۳ وضعیت) و سفارش مرتبط -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-          <div>
-            <label class="block font-medium text-slate-700 mb-1">وضعیت سفارش *</label>
-            <select id="formStatus" class="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 font-medium">
-              <option value="In Progress">در حال انجام</option>
-              <option value="Delivered">تحویل داده شده</option>
-              <option value="Canceled">لغو شده</option>
-            </select>
-          </div>
-          <div>
-            <label class="block font-medium text-slate-700 mb-1">سفارش مرتبط / والد (Parent Order)</label>
-            <select id="formParentOrderId" class="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500">
-              <option value="">(پروژه مستقل / بدون والد)</option>
-            </select>
-            <p class="text-[10px] text-slate-400 mt-0.5">برای ریسایزها، اصلاحیه‌ها و نسخه‌های بعدیِ این سفارش</p>
-          </div>
-        </div>
-
-        <!-- امور مالی، فاکتور و کار دوستانه/رایگان -->
+        <!-- بخش ج: امور مالی (با جداسازی خودکار سه رقم سه رقم) -->
         <div class="p-3.5 sm:p-4 bg-slate-50 rounded-2xl border border-slate-200/80 space-y-3">
           <div class="flex flex-wrap items-center justify-between gap-2">
-            <span class="font-bold text-slate-800 text-xs sm:text-sm">امور مالی و ثبت ارزش کار</span>
+            <span class="font-bold text-slate-800 text-xs sm:text-sm">۳. امور مالی پروژه و فاکتور</span>
             <label class="inline-flex items-center cursor-pointer gap-2 bg-purple-50 hover:bg-purple-100 text-purple-800 px-3 py-1.5 rounded-xl border border-purple-200 transition">
               <input type="checkbox" id="formIsFree" onchange="toggleFreeOrder(this.checked)" class="rounded text-purple-600 focus:ring-purple-500">
               <span class="font-bold text-xs">این کار دوستانه / رایگان است (بدون دریافت هزینه)</span>
@@ -473,14 +542,19 @@
               <label class="block font-medium text-slate-600 mb-1">
                 <span id="labelTotalFee">مبلغ / ارزش کل کار (تومان) *</span>
               </label>
-              <input type="number" id="formTotalFee" min="0" step="50000" placeholder="مثال: 5000000" class="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 font-mono font-semibold">
-              <p class="text-[10px] text-slate-400 mt-0.5" id="hintTotalFee">ارزش ریالی کار جهت محاسبه در آمار دوستانه ثبت می‌شود.</p>
+              <!-- اینپوت با قابلیت جداسازی سه رقم سه رقم به صورت زنده -->
+              <input type="text" id="formTotalFeeFormatted" oninput="formatCurrencyInput(this, 'formTotalFee')" placeholder="مثال: ۵,۰۰۰,۰۰۰" class="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 font-mono font-semibold">
+              <input type="hidden" id="formTotalFee" value="0">
+              <p class="text-[10px] text-slate-400 mt-0.5" id="hintTotalFee">ارزش ریالی کار با جداسازی خودکار ۳ رقم</p>
             </div>
+
             <div>
               <label class="block font-medium text-slate-600 mb-1">مبلغ دریافت شده (تومان)</label>
-              <input type="number" id="formAmountPaid" min="0" step="50000" placeholder="0" class="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 font-mono">
-              <p class="text-[10px] text-slate-400 mt-0.5" id="hintAmountPaid">مبلغ واریزی تا این لحظه</p>
+              <input type="text" id="formAmountPaidFormatted" oninput="formatCurrencyInput(this, 'formAmountPaid')" placeholder="۰" class="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 font-mono">
+              <input type="hidden" id="formAmountPaid" value="0">
+              <p class="text-[10px] text-slate-400 mt-0.5" id="hintAmountPaid">مبلغ واریز شده تا این لحظه</p>
             </div>
+
             <div>
               <label class="block font-medium text-slate-600 mb-1">شماره یا عنوان فاکتور</label>
               <input type="text" id="formInvoiceId" placeholder="مثال: فاکتور ۱۴۰۳-۰۱" class="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500">
@@ -488,16 +562,17 @@
           </div>
         </div>
 
-        <!-- لینک گوگل درایو -->
-        <div>
-          <label class="block font-medium text-slate-700 mb-1">لینک پوشه یا فایل‌های پروژه در Google Drive</label>
-          <div class="relative">
-            <input type="url" id="formFilesLink" placeholder="https://drive.google.com/..." class="w-full pl-9 pr-3 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500">
-            <span class="absolute left-3 top-2.5 text-slate-400">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
-              </svg>
-            </span>
+        <!-- بخش د: پیوند فایل درایو و والد مستقل (در صورت ویرایش) -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block font-medium text-slate-700 mb-1">لینک فایل‌ها در Google Drive</label>
+            <input type="url" id="formFilesLink" placeholder="https://drive.google.com/..." class="w-full px-3 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500">
+          </div>
+          <div>
+            <label class="block font-medium text-slate-700 mb-1">پیوند به سفارش والد موجود (اختیاری)</label>
+            <select id="formParentOrderId" class="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500">
+              <option value="">(پروژه مستقل / بدون والد)</option>
+            </select>
           </div>
         </div>
 
@@ -511,12 +586,12 @@
   </div>
 
   <!-- ======================================================== -->
-  <!-- مودال تنظیمات و تغییر رمز عبور (Settings Modal) -->
+  <!-- مودال تنظیمات و تغییر رمز عبور امن دیتابیس (Settings Modal) -->
   <!-- ======================================================== -->
   <div id="settingsModal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 modal-backdrop">
-    <div class="bg-white rounded-2xl w-full max-w-lg shadow-2xl border border-slate-100 p-5 sm:p-6 space-y-4">
+    <div class="bg-white rounded-3xl w-full max-w-lg shadow-2xl border border-slate-100 p-5 sm:p-6 space-y-4">
       <div class="flex items-center justify-between pb-3 border-b border-slate-100">
-        <h3 class="text-sm sm:text-base font-bold text-slate-900">تنظیمات سیستم و امنیت</h3>
+        <h3 class="text-sm sm:text-base font-bold text-slate-900">تنظیمات سیستم و امنیت سرور</h3>
         <button onclick="closeSettingsModal()" class="text-slate-400 hover:text-slate-600 p-1.5 rounded-lg hover:bg-slate-100 transition">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
@@ -525,15 +600,19 @@
       </div>
 
       <div class="space-y-4 text-xs">
-        <!-- تغییر رمز عبور لاگین -->
-        <div class="p-3.5 bg-slate-50 rounded-xl border border-slate-200 space-y-2">
-          <span class="font-bold text-slate-800 block">تغییر رمز عبور لاگین پنل</span>
-          <div class="flex items-center gap-2">
-            <input type="text" id="newPasscodeInput" placeholder="رمز عبور جدید" class="flex-1 px-3 py-2 rounded-lg border border-slate-200 bg-white font-mono">
-            <button type="button" onclick="updatePasscode()" class="px-3 py-2 bg-slate-800 hover:bg-slate-900 text-white rounded-lg transition font-medium">تغییر رمز</button>
+        <!-- تغییر رمز عبور در دیتابیس سرور -->
+        <form onsubmit="handlePasswordChangeSubmit(event)" class="p-3.5 bg-slate-50 rounded-2xl border border-slate-200 space-y-2">
+          <span class="font-bold text-slate-800 block">تغییر رمز عبور در دیتابیس سرور</span>
+          <p class="text-[11px] text-slate-500">رمز عبور با الگوریتم SHA-256 در سرور ذخیره می‌شود و هیچ کاربری قادر به مشاهده آن در کلاینت نخواهد بود.</p>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
+            <input type="password" id="currentPassInput" required placeholder="رمز عبور فعلی" class="px-3 py-2 rounded-xl border border-slate-200 bg-white font-mono">
+            <input type="password" id="newPassInput" required placeholder="رمز عبور جدید" class="px-3 py-2 rounded-xl border border-slate-200 bg-white font-mono">
           </div>
-          <span id="passcodeUpdateMsg" class="text-[10px] text-emerald-600 font-medium hidden">رمز عبور با موفقیت به‌روزرسانی شد.</span>
-        </div>
+          <div class="flex justify-end pt-1">
+            <button type="submit" id="changePassBtn" class="px-4 py-2 bg-slate-800 hover:bg-slate-900 text-white rounded-xl transition font-medium">ذخیره رمز جدید در سرور</button>
+          </div>
+          <span id="passcodeUpdateMsg" class="text-[10px] text-emerald-600 font-semibold hidden"></span>
+        </form>
 
         <!-- آدرس Google Apps Script Web App -->
         <div>
@@ -542,13 +621,13 @@
         </div>
 
         <div class="p-3 bg-amber-50 rounded-xl border border-amber-200 text-amber-800 text-[11px] space-y-1">
-          <p class="font-semibold">نکات راه‌اندازی:</p>
-          <p>برای اتصال به گوگل شیت، اسکریپت را با دسترسی Anyone منتشر نموده و لینک آن را در کادر بالا وارد کنید.</p>
+          <p class="font-semibold">نکات مهم امنیتی:</p>
+          <p>رمز عبور داخل شیت تنظیمات یا Properties سرور به صورت رمزنگاری‌شده نگهداری می‌شود و از طریق inspect یا سورس‌کد فرانت‌اند افشا نمی‌شود.</p>
         </div>
       </div>
 
       <div class="pt-3 border-t border-slate-100 flex items-center justify-between">
-        <button onclick="clearGasUrl()" class="text-xs text-rose-600 hover:underline">بازنشانی به حالت دمو</button>
+        <button onclick="clearGasUrl()" class="text-xs text-rose-600 hover:underline">حالت آفلاین (دمو)</button>
         <div class="flex items-center gap-2">
           <button onclick="closeSettingsModal()" class="px-4 py-2 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 text-xs font-medium transition">بستن</button>
           <button onclick="saveGasUrl()" class="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-medium shadow-sm transition">ذخیره و اتصال</button>
@@ -561,4 +640,3 @@
   <script src="app.js"></script>
 </body>
 </html>
-
