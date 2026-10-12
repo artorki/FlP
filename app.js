@@ -1,21 +1,22 @@
 /**
  * =========================================================================
  * Freelance Design Management Panel - Frontend Logic
+ * نسخه بهینه‌شده با تاریخ شمسی، احراز هویت، کارهای دوستانه و نمایش موبایل
  * =========================================================================
  */
 
-// داده‌های اولیه و وضعیت برنامه
+// مدیریت وضعیت برنامه
 let appState = {
   gasUrl: localStorage.getItem('gas_web_app_url') || '',
+  passcode: localStorage.getItem('app_passcode') || '1234',
   orders: [],
   clients: [],
-  invoices: [],
   filters: {
     timeframe: 'all',
     type: 'all',
     clientId: 'all',
     finance: 'all',
-    invoiceId: 'all',
+    status: 'all',
     search: ''
   },
   charts: {
@@ -24,163 +25,296 @@ let appState = {
   }
 };
 
-// داده‌های پیش‌فرض برای حالت دمو (نمایش فوری قبل از اتصال به GAS)
+// داده‌های نمونه اولیه با تاریخ شمسی و کارهای دوستانه
 const DEMO_ORDERS = [
   {
-    id: 'ORD-20261001-101',
+    id: 'ORD-140307-101',
     title: 'طراحی هویت بصری و لوگوی استارتاپ رایان',
-    dateOrdered: '2026-09-15',
-    dateDeadline: '2026-10-01',
-    dateDelivered: '2026-09-30',
+    dateOrdered: '1403/06/25',
+    dateDelivered: '1403/07/10',
     type: 'Both',
-    formatSize: 'Vector AI, SVG, Guide PDF',
+    formatType: 'دفترچه هویت بصری و وکتور',
     status: 'Delivered',
-    workHours: 24,
     clientId: 'CLI-01',
     clientName: 'شرکت فناوران رایان',
     clientContact: '09121112233',
     parentOrderId: '',
     filesLink: 'https://drive.google.com/drive/folders/demo-brand-identity',
-    invoiceId: 'INV-1403-101',
+    invoiceId: 'فاکتور ۱۴۰۳-۱۰۱',
     totalFee: 15000000,
     amountPaid: 15000000,
     remainingFee: 0,
     paymentStatus: 'Paid'
   },
   {
-    id: 'ORD-20261003-102',
+    id: 'ORD-140307-102',
     title: 'پوستر نمایشگاه بین‌المللی تکنولوژی',
-    dateOrdered: '2026-09-20',
-    dateDeadline: '2026-09-28',
-    dateDelivered: '2026-09-27',
+    dateOrdered: '1403/06/30',
+    dateDelivered: '1403/07/06',
     type: 'Print',
-    formatSize: '70x100 cm (300 DPI)',
-    status: 'Completed',
-    workHours: 8.5,
+    formatType: 'پوستر ۷۰در۱۰۰',
+    status: 'Delivered',
     clientId: 'CLI-02',
     clientName: 'سازمان توسعه فناوری',
     clientContact: 'info@tech-org.ir',
     parentOrderId: '',
     filesLink: 'https://drive.google.com/drive/folders/demo-poster-print',
-    invoiceId: 'INV-1403-102',
-    totalFee: 4500000,
-    amountPaid: 2000000,
+    invoiceId: 'فاکتور ۱۴۰۳-۱۰۲',
+    totalFee: 5000000,
+    amountPaid: 2500000,
     remainingFee: 2500000,
     paymentStatus: 'Partial'
   },
   {
-    id: 'ORD-20261005-103',
+    id: 'ORD-140307-103',
     title: 'ریسایز پوستر نمایشگاه برای استوری و پست اینستاگرام',
-    dateOrdered: '2026-09-28',
-    dateDeadline: '2026-09-30',
-    dateDelivered: '2026-09-29',
+    dateOrdered: '1403/07/07',
+    dateDelivered: '1403/07/08',
     type: 'Digital',
-    formatSize: '1080x1920 & 1080x1080',
+    formatType: 'استوری و پست',
     status: 'Delivered',
-    workHours: 2,
     clientId: 'CLI-02',
     clientName: 'سازمان توسعه فناوری',
     clientContact: 'info@tech-org.ir',
-    parentOrderId: 'ORD-20261003-102',
+    parentOrderId: 'ORD-140307-102',
     filesLink: 'https://drive.google.com/drive/folders/demo-poster-resize',
-    invoiceId: 'INV-1403-102',
-    totalFee: 1000000,
+    invoiceId: 'فاکتور ۱۴۰۳-۱۰۲',
+    totalFee: 1200000,
     amountPaid: 0,
-    remainingFee: 1000000,
+    remainingFee: 1200000,
     paymentStatus: 'Unpaid'
   },
   {
-    id: 'ORD-20261008-104',
-    title: 'طراحی بنر همایش خیریه کودکان امید (دوستانه)',
-    dateOrdered: '2026-10-02',
-    dateDeadline: '2026-10-05',
-    dateDelivered: '2026-10-04',
+    id: 'ORD-140307-104',
+    title: 'طراحی دیوارنگاره کافه نوید (کار دوستانه)',
+    dateOrdered: '1403/07/12',
+    dateDelivered: '1403/07/16',
     type: 'Print',
-    formatSize: '3x2 متر بیلبورد',
+    formatType: 'دیوارنگاره ۴ در ۳ متر',
     status: 'Delivered',
-    workHours: 4,
     clientId: 'CLI-03',
-    clientName: 'خیریه امید فردا',
-    clientContact: 'omid@charity.org',
+    clientName: 'نوید صادقی (دوست قدیمی)',
+    clientContact: '09351234567',
     parentOrderId: '',
-    filesLink: 'https://drive.google.com/drive/folders/demo-charity-banner',
-    invoiceId: 'INV-FREE-01',
-    totalFee: 0,
+    filesLink: 'https://drive.google.com/drive/folders/demo-friendly-mural',
+    invoiceId: 'دوستانه / بدون فاکتور',
+    totalFee: 6000000, // ارزش واقعی کار ثبت شده اما وجهی گرفته نشده
     amountPaid: 0,
     remainingFee: 0,
     paymentStatus: 'Free'
   },
   {
-    id: 'ORD-20261010-105',
-    title: 'طراحی رابط کاربری UI صفحه لندینگ',
-    dateOrdered: '2026-10-07',
-    dateDeadline: '2026-10-18',
+    id: 'ORD-140307-105',
+    title: 'طراحی لایت‌باکس و استند ورودی مرکز خرید',
+    dateOrdered: '1403/07/18',
     dateDelivered: '',
-    type: 'Digital',
-    formatSize: 'Figma 1440px',
+    type: 'Both',
+    formatType: 'لایت‌باکس محیطی',
     status: 'In Progress',
-    workHours: 12,
     clientId: 'CLI-01',
     clientName: 'شرکت فناوران رایان',
     clientContact: '09121112233',
-    parentOrderId: 'ORD-20261001-101',
-    filesLink: 'https://figma.com/file/demo',
-    invoiceId: 'INV-1403-103',
-    totalFee: 8000000,
-    amountPaid: 4000000,
+    parentOrderId: 'ORD-140307-101',
+    filesLink: 'https://drive.google.com/drive/folders/demo-lightbox',
+    invoiceId: 'فاکتور ۱۴۰۳-۱۰۳',
+    totalFee: 7500000,
+    amountPaid: 3500000,
     remainingFee: 4000000,
     paymentStatus: 'Partial'
   }
 ];
 
-// راه‌اندازی اولیه برنامه
+// راه‌اندازی اولیه
 document.addEventListener('DOMContentLoaded', () => {
-  initConnectionStatus();
-  initFormDates();
+  checkAuth();
+});
 
-  // اگر URL ذخیره شده باشد، از سرور واکشی کن؛ در غیر اینصورت داده‌های دمو را بارگذاری کن
+/**
+ * =========================================================================
+ * بخش ۱: احراز هویت و لاگین امن (Passcode / Auth)
+ * =========================================================================
+ */
+function checkAuth() {
+  const isAuth = sessionStorage.getItem('is_authenticated') === 'true';
+  const loginScreen = document.getElementById('loginScreen');
+  const appContainer = document.getElementById('appContainer');
+
+  if (isAuth) {
+    loginScreen.classList.add('hidden');
+    appContainer.classList.remove('hidden');
+    initApp();
+  } else {
+    loginScreen.classList.remove('hidden');
+    appContainer.classList.add('hidden');
+  }
+}
+
+function handleLoginSubmit(e) {
+  e.preventDefault();
+  const inputPin = document.getElementById('loginPinInput').value.trim();
+  const currentPin = localStorage.getItem('app_passcode') || '1234';
+  const errorEl = document.getElementById('loginError');
+
+  if (inputPin === currentPin) {
+    sessionStorage.setItem('is_authenticated', 'true');
+    errorEl.classList.add('hidden');
+    checkAuth();
+  } else {
+    errorEl.classList.remove('hidden');
+    document.getElementById('loginPinInput').value = '';
+    document.getElementById('loginPinInput').focus();
+  }
+}
+
+function handleLogout() {
+  if (confirm('آیا مایل به خروج از حساب هستید؟')) {
+    sessionStorage.removeItem('is_authenticated');
+    checkAuth();
+  }
+}
+
+function updatePasscode() {
+  const newPin = document.getElementById('newPasscodeInput').value.trim();
+  const msg = document.getElementById('passcodeUpdateMsg');
+  if (newPin.length < 3) {
+    alert('رمز عبور باید حداقل ۳ کاراکتر باشد.');
+    return;
+  }
+  localStorage.setItem('app_passcode', newPin);
+  appState.passcode = newPin;
+  msg.classList.remove('hidden');
+  setTimeout(() => msg.classList.add('hidden'), 3000);
+}
+
+/**
+ * =========================================================================
+ * بخش ۲: الگوریتم تاریخ شمسی (Jalali Calendar)
+ * =========================================================================
+ */
+function gregorianToJalali(gy, gm, gd) {
+  const g_d_m = [0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334];
+  const gy2 = (gm > 2) ? (gy + 1) : gy;
+  let days = 355666 + (365 * gy) + Math.floor((gy2 + 3) / 4) - Math.floor((gy2 + 99) / 100) + Math.floor((gy2 + 399) / 400) + gd + g_d_m[gm - 1];
+  let jy = -1595 + (33 * Math.floor(days / 12053));
+  days %= 12053;
+  jy += 4 * Math.floor(days / 1461);
+  days %= 1461;
+  if (days > 365) {
+    jy += Math.floor((days - 1) / 365);
+    days = (days - 1) % 365;
+  }
+  const jm = (days < 186) ? 1 + Math.floor(days / 31) : 7 + Math.floor((days - 186) / 30);
+  const jd = 1 + ((days < 186) ? (days % 31) : ((days - 186) % 30));
+  return [jy, jm, jd];
+}
+
+function jalaliToGregorian(jy, jm, jd) {
+  jy = Number(jy); jm = Number(jm); jd = Number(jd);
+  const jy2 = jy + 1595;
+  let days = -355668 + (365 * jy2) + Math.floor(jy2 / 33) * 8 + Math.floor(((jy2 % 33) + 3) / 4) + jd + ((jm < 7) ? (jm - 1) * 31 : ((jm - 7) * 30) + 186);
+  let gy = 400 * Math.floor(days / 146097);
+  days %= 146097;
+  if (days > 36524) {
+    gy += 100 * Math.floor(--days / 36524);
+    days %= 36524;
+    if (days >= 365) days++;
+  }
+  gy += 4 * Math.floor(days / 1461);
+  days %= 1461;
+  if (days > 365) {
+    gy += Math.floor((days - 1) / 365);
+    days = (days - 1) % 365;
+  }
+  let gd = days + 1;
+  const sal_a = [0, 31, ((gy % 4 === 0 && gy % 100 !== 0) || (gy % 400 === 0)) ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+  let gm = 0;
+  for (gm = 0; gm < 13; gm++) {
+    const v = sal_a[gm];
+    if (gd <= v) break;
+    gd -= v;
+  }
+  return [gy, gm, gd];
+}
+
+function getTodayJalali() {
+  const now = new Date();
+  const [jy, jm, jd] = gregorianToJalali(now.getFullYear(), now.getMonth() + 1, now.getDate());
+  const pad = n => String(n).padStart(2, '0');
+  return `${jy}/${pad(jm)}/${pad(jd)}`;
+}
+
+function normalizeToJalali(dateStr) {
+  if (!dateStr) return '';
+  dateStr = dateStr.toString().trim();
+  // اگر از قبل فرمت شمسی ۱۴۰۳/.. باشد
+  if (dateStr.startsWith('13') || dateStr.startsWith('14')) {
+    return dateStr.replace(/-/g, '/');
+  }
+  // اگر تاریخ میلادی باشد (مثلاً 2026-10-12)
+  if (dateStr.includes('-') || dateStr.includes('/')) {
+    const parts = dateStr.split(/[-/T ]/);
+    if (parts.length >= 3 && parts[0].length === 4) {
+      const gy = parseInt(parts[0], 10);
+      const gm = parseInt(parts[1], 10);
+      const gd = parseInt(parts[2], 10);
+      if (gy > 1900 && gm >= 1 && gm <= 12 && gd >= 1 && gd <= 31) {
+        const [jy, jm, jd] = gregorianToJalali(gy, gm, gd);
+        const pad = n => String(n).padStart(2, '0');
+        return `${jy}/${pad(jm)}/${pad(jd)}`;
+      }
+    }
+  }
+  return dateStr;
+}
+
+function parseJalaliToDate(jalaliStr) {
+  if (!jalaliStr) return new Date();
+  const parts = jalaliStr.split('/');
+  if (parts.length === 3) {
+    const [gy, gm, gd] = jalaliToGregorian(parseInt(parts[0], 10), parseInt(parts[1], 10), parseInt(parts[2], 10));
+    return new Date(gy, gm - 1, gd);
+  }
+  return new Date();
+}
+
+/**
+ * =========================================================================
+ * بخش ۳: منطق برنامه و همگام‌سازی داده‌ها
+ * =========================================================================
+ */
+function initApp() {
+  initConnectionStatus();
   if (appState.gasUrl) {
     fetchData();
   } else {
     loadLocalDemoData();
   }
-});
+}
 
-/**
- * مدیریت وضعیت اتصال به GAS
- */
 function initConnectionStatus() {
   const badge = document.getElementById('connectionStatusBadge');
   const text = document.getElementById('connectionStatusText');
   const input = document.getElementById('gasUrlInput');
 
   if (appState.gasUrl) {
-    input.value = appState.gasUrl;
-    text.textContent = 'متصل به سرور GAS';
-    badge.className = 'flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200 cursor-pointer';
-    badge.querySelector('span:first-child').className = 'w-2 h-2 rounded-full bg-emerald-500';
+    if (input) input.value = appState.gasUrl;
+    if (text) text.textContent = 'متصل به سرور GAS';
+    if (badge) {
+      badge.className = 'hidden md:flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200 cursor-pointer';
+      badge.querySelector('span:first-child').className = 'w-2 h-2 rounded-full bg-emerald-500';
+    }
   } else {
-    input.value = '';
-    text.textContent = 'حالت دمو (حافظه لوکال)';
-    badge.className = 'flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-amber-50 text-amber-700 border border-amber-200 cursor-pointer';
-    badge.querySelector('span:first-child').className = 'w-2 h-2 rounded-full bg-amber-500 animate-pulse';
+    if (input) input.value = '';
+    if (text) text.textContent = 'حالت دمو';
+    if (badge) {
+      badge.className = 'hidden md:flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-amber-50 text-amber-700 border border-amber-200 cursor-pointer';
+      badge.querySelector('span:first-child').className = 'w-2 h-2 rounded-full bg-amber-500 animate-pulse';
+    }
   }
 }
 
-/**
- * تاریخ پیش‌فرض فرم (امروز)
- */
-function initFormDates() {
-  const today = new Date().toISOString().split('T')[0];
-  const dateOrdered = document.getElementById('formDateOrdered');
-  if (dateOrdered) dateOrdered.value = today;
-}
-
-/**
- * بارگذاری داده‌های دمو در صورت عدم تنظیم GAS URL
- */
 function loadLocalDemoData() {
-  const savedOrders = localStorage.getItem('demo_orders');
+  const savedOrders = localStorage.getItem('demo_orders_v2');
   if (savedOrders) {
     try {
       appState.orders = JSON.parse(savedOrders);
@@ -189,16 +323,13 @@ function loadLocalDemoData() {
     }
   } else {
     appState.orders = [...DEMO_ORDERS];
-    localStorage.setItem('demo_orders', JSON.stringify(appState.orders));
+    localStorage.setItem('demo_orders_v2', JSON.stringify(appState.orders));
   }
 
   buildClientAndInvoiceLists();
   applyFilters();
 }
 
-/**
- * واکشی اطلاعات از Google Apps Script
- */
 async function fetchData() {
   if (!appState.gasUrl) {
     loadLocalDemoData();
@@ -215,48 +346,45 @@ async function fetchData() {
 
     const result = await response.json();
     if (result && result.success && result.data) {
-      appState.orders = result.data.orders || [];
+      appState.orders = (result.data.orders || []).map(o => ({
+        ...o,
+        dateOrdered: normalizeToJalali(o.dateOrdered),
+        dateDelivered: normalizeToJalali(o.dateDelivered)
+      }));
       appState.clients = result.data.clients || [];
-      appState.invoices = result.data.invoices || [];
-      
+
       initConnectionStatus();
       buildClientAndInvoiceLists();
       applyFilters();
     } else {
-      throw new Error(result.error || 'خطا در واکشی داده‌ها از سرور');
+      throw new Error(result.error || 'خطا در بارگذاری اطلاعات');
     }
   } catch (err) {
-    console.warn('امکان اتصال به GAS وجود ندارد. استفاده از حافظه محلی:', err);
-    alert('اتصال به سرور برقرار نشد؛ از داده‌های محلی استفاده می‌شود.\nجزئیات: ' + err.message);
+    console.warn('اتصال به سرور برقرار نشد، بارگذاری داده‌های محلی:', err);
     loadLocalDemoData();
   } finally {
     showLoading(false);
   }
 }
 
-/**
- * ارسال سفارش جدید یا ویرایش به سرور
- */
 async function saveOrderApi(orderData, isEdit) {
   const action = isEdit ? 'updateOrder' : 'addOrder';
 
   if (!appState.gasUrl) {
-    // حالت لوکال / دمو
     if (isEdit) {
       const idx = appState.orders.findIndex(o => o.id === orderData.id);
       if (idx !== -1) appState.orders[idx] = { ...appState.orders[idx], ...orderData };
     } else {
-      orderData.id = 'ORD-' + new Date().toISOString().replace(/\D/g, '').slice(0, 8) + '-' + Math.floor(100 + Math.random() * 900);
+      orderData.id = 'ORD-' + getTodayJalali().replace(/\//g, '').slice(2) + '-' + Math.floor(100 + Math.random() * 900);
       appState.orders.unshift(orderData);
     }
-    localStorage.setItem('demo_orders', JSON.stringify(appState.orders));
+    localStorage.setItem('demo_orders_v2', JSON.stringify(appState.orders));
     buildClientAndInvoiceLists();
     applyFilters();
     closeOrderModal();
     return { success: true };
   }
 
-  // ارسال به Google Apps Script با Content-Type: text/plain جهت دور زدن محدودیت CORS preflight
   showLoading(true);
   try {
     const payload = { action: action, data: orderData };
@@ -272,25 +400,21 @@ async function saveOrderApi(orderData, isEdit) {
       await fetchData();
       return res;
     } else {
-      throw new Error(res.error || 'خطا در ثبت سفارش روی سرور');
+      throw new Error(res.error || 'خطا در سرور');
     }
   } catch (err) {
-    console.error('خطای ارتباط با GAS:', err);
-    alert('خطا در ارتباط با سرور: ' + err.message);
+    alert('خطا در ذخیره‌سازی: ' + err.message);
   } finally {
     showLoading(false);
   }
 }
 
-/**
- * حذف سفارش
- */
 async function deleteOrder(orderId) {
   if (!confirm('آیا از حذف این سفارش اطمینان دارید؟')) return;
 
   if (!appState.gasUrl) {
     appState.orders = appState.orders.filter(o => o.id !== orderId);
-    localStorage.setItem('demo_orders', JSON.stringify(appState.orders));
+    localStorage.setItem('demo_orders_v2', JSON.stringify(appState.orders));
     buildClientAndInvoiceLists();
     applyFilters();
     return;
@@ -316,12 +440,8 @@ async function deleteOrder(orderId) {
   }
 }
 
-/**
- * ایجاد لیست منحصر‌به‌فرد مشتریان و فاکتورها در فیلترها و فرم
- */
 function buildClientAndInvoiceLists() {
-  const clientSet = new Map();
-  const invoiceSet = new Set();
+  const clientSet = new Set();
   const parentOrderSelect = document.getElementById('formParentOrderId');
 
   if (parentOrderSelect) {
@@ -329,12 +449,7 @@ function buildClientAndInvoiceLists() {
   }
 
   appState.orders.forEach(o => {
-    if (o.clientName) {
-      clientSet.set(o.clientId || o.clientName, o.clientName);
-    }
-    if (o.invoiceId) {
-      invoiceSet.add(o.invoiceId);
-    }
+    if (o.clientName) clientSet.add(o.clientName);
     if (parentOrderSelect) {
       const opt = document.createElement('option');
       opt.value = o.id;
@@ -343,12 +458,11 @@ function buildClientAndInvoiceLists() {
     }
   });
 
-  // پر کردن دراپ‌داون فیلتر مشتریان
   const clientFilter = document.getElementById('clientFilter');
   if (clientFilter) {
     const currentVal = clientFilter.value;
     clientFilter.innerHTML = '<option value="all">همه مشتریان</option>';
-    clientSet.forEach((name, id) => {
+    clientSet.forEach(name => {
       const opt = document.createElement('option');
       opt.value = name;
       opt.textContent = name;
@@ -356,60 +470,42 @@ function buildClientAndInvoiceLists() {
     });
     clientFilter.value = currentVal;
   }
-
-  // پر کردن دراپ‌داون فیلتر فاکتورها
-  const invoiceFilter = document.getElementById('invoiceFilter');
-  if (invoiceFilter) {
-    const currentVal = invoiceFilter.value;
-    invoiceFilter.innerHTML = '<option value="all">همه فاکتورها</option>';
-    invoiceSet.forEach(inv => {
-      const opt = document.createElement('option');
-      opt.value = inv;
-      opt.textContent = inv;
-      invoiceFilter.appendChild(opt);
-    });
-    invoiceFilter.value = currentVal;
-  }
 }
 
-/**
- * تنظیم فیلتر بازه زمانی (هفتگی، ماهانه، شش‌ماهه، سالانه)
- */
 function setTimeframeFilter(timeframe) {
   appState.filters.timeframe = timeframe;
   document.querySelectorAll('.tf-btn').forEach(btn => {
     if (btn.dataset.tf === timeframe) {
-      btn.className = 'tf-btn px-3 py-1.5 rounded-lg text-xs font-medium bg-indigo-50 text-indigo-600 border border-indigo-200 transition';
+      btn.className = 'tf-btn px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-medium bg-indigo-50 text-indigo-600 border border-indigo-200 transition whitespace-nowrap';
     } else {
-      btn.className = 'tf-btn px-3 py-1.5 rounded-lg text-xs font-medium text-slate-600 hover:bg-slate-100 transition';
+      btn.className = 'tf-btn px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-medium text-slate-600 hover:bg-slate-100 transition whitespace-nowrap';
     }
   });
   applyFilters();
 }
 
 /**
- * اعمال کلیه فیلترها و بروزرسانی جدول، آمار و نمودارها
+ * اعمال فیلترها و بروزرسانی نمایش
  */
 function applyFilters() {
   const search = (document.getElementById('searchInput')?.value || '').toLowerCase().trim();
   const type = document.getElementById('typeFilter')?.value || 'all';
   const client = document.getElementById('clientFilter')?.value || 'all';
   const finance = document.getElementById('financeFilter')?.value || 'all';
-  const invoice = document.getElementById('invoiceFilter')?.value || 'all';
+  const status = document.getElementById('statusFilter')?.value || 'all';
 
   appState.filters.search = search;
   appState.filters.type = type;
   appState.filters.clientId = client;
   appState.filters.finance = finance;
-  appState.filters.invoiceId = invoice;
+  appState.filters.status = status;
 
   const now = new Date();
 
   const filtered = appState.orders.filter(order => {
-    // ۱. فیلتر بازه زمانی
+    // ۱. فیلتر بازه زمانی بر اساس تاریخ دریافت شمسی
     if (appState.filters.timeframe !== 'all') {
-      const orderDate = new Date(order.dateOrdered);
-      if (isNaN(orderDate.getTime())) return true;
+      const orderDate = parseJalaliToDate(order.dateOrdered);
       const diffDays = (now - orderDate) / (1000 * 60 * 60 * 24);
 
       if (appState.filters.timeframe === 'weekly' && diffDays > 7) return false;
@@ -418,7 +514,7 @@ function applyFilters() {
       if (appState.filters.timeframe === 'yearly' && diffDays > 365) return false;
     }
 
-    // ۲. فیلتر نوع (Digital / Print / Both)
+    // ۲. فیلتر نوع رسانه
     if (type !== 'all' && order.type !== type) return false;
 
     // ۳. فیلتر مشتری
@@ -432,26 +528,26 @@ function applyFilters() {
       if (finance === 'Unpaid' && order.paymentStatus !== 'Unpaid') return false;
     }
 
-    // ۵. فیلتر فاکتور
-    if (invoice !== 'all' && order.invoiceId !== invoice) return false;
+    // ۵. فیلتر وضعیت اجرا (۳ حالت)
+    if (status !== 'all' && order.status !== status) return false;
 
     // ۶. جستجوی متنی
     if (search) {
       const matchTitle = (order.title || '').toLowerCase().includes(search);
       const matchClient = (order.clientName || '').toLowerCase().includes(search);
       const matchId = (order.id || '').toLowerCase().includes(search);
+      const matchFormat = (order.formatType || '').toLowerCase().includes(search);
       const matchInvoice = (order.invoiceId || '').toLowerCase().includes(search);
-      if (!matchTitle && !matchClient && !matchId && !matchInvoice) return false;
+      if (!matchTitle && !matchClient && !matchId && !matchFormat && !matchInvoice) return false;
     }
 
     return true;
   });
 
   updateKpis(filtered);
-  renderOrdersTable(filtered);
+  renderOrders(filtered);
   updateCharts(filtered);
 
-  // بروزرسانی شمارنده تعداد فیلترشده
   const counterEl = document.getElementById('filteredResultsCount');
   if (counterEl) {
     counterEl.textContent = `نمایش ${formatPersianNumber(filtered.length)} از ${formatPersianNumber(appState.orders.length)} سفارش`;
@@ -460,70 +556,71 @@ function applyFilters() {
 
 /**
  * محاسبه و بروزرسانی کارت‌های آماری (KPIs)
+ * با محاسبه ارزش کارهای دوستانه (مبلغ واقعی کارهای بدون هزینه)
  */
 function updateKpis(ordersList) {
   const totalOrders = ordersList.length;
-  let completedCount = 0;
+  let deliveredCount = 0;
   let activeCount = 0;
-  let totalHours = 0;
-  let totalGross = 0;
   let totalPaid = 0;
   let totalReceivables = 0;
   let unpaidCount = 0;
+  let paidOrdersCount = 0;
+  let friendlyTotalValue = 0;
   let freeCount = 0;
 
   ordersList.forEach(o => {
-    if (o.status === 'Completed' || o.status === 'Delivered') completedCount++;
-    if (o.status === 'In Progress' || o.status === 'Review') activeCount++;
+    if (o.status === 'Delivered') deliveredCount++;
+    if (o.status === 'In Progress') activeCount++;
 
-    totalHours += Number(o.workHours) || 0;
     const fee = Number(o.totalFee) || 0;
     const paid = Number(o.amountPaid) || 0;
-    const rem = Number(o.remainingFee) || Math.max(0, fee - paid);
+    const isFree = (o.paymentStatus === 'Free');
 
-    totalGross += fee;
-    totalPaid += paid;
-    if (rem > 0 && o.paymentStatus !== 'Free') {
-      totalReceivables += rem;
-      unpaidCount++;
-    }
-
-    if (o.paymentStatus === 'Free' || fee === 0) {
+    if (isFree) {
       freeCount++;
+      friendlyTotalValue += fee; // محاسبه چند تومان کار دوستانه انجام شده است
+    } else {
+      totalPaid += paid;
+      if (o.paymentStatus === 'Paid') paidOrdersCount++;
+      const rem = Number(o.remainingFee) || Math.max(0, fee - paid);
+      if (rem > 0) {
+        totalReceivables += rem;
+        unpaidCount++;
+      }
     }
   });
 
-  const avgHours = totalOrders > 0 ? (totalHours / totalOrders).toFixed(1) : '۰';
   const freePercent = totalOrders > 0 ? Math.round((freeCount / totalOrders) * 100) : 0;
 
-  // مقداردهی به المان‌های DOM
   document.getElementById('kpiTotalOrders').textContent = formatPersianNumber(totalOrders);
-  document.getElementById('kpiCompletedOrders').textContent = formatPersianNumber(completedCount);
+  document.getElementById('kpiDeliveredOrders').textContent = formatPersianNumber(deliveredCount);
   document.getElementById('kpiActiveOrders').textContent = formatPersianNumber(activeCount);
 
-  document.getElementById('kpiWorkHours').textContent = formatPersianNumber(totalHours);
-  document.getElementById('kpiAvgHours').textContent = formatPersianNumber(avgHours);
-
   document.getElementById('kpiTotalRevenue').textContent = formatCurrency(totalPaid);
-  document.getElementById('kpiGrossRevenue').textContent = formatCurrency(totalGross) + ' ت';
+  document.getElementById('kpiPaidOrdersCount').textContent = formatPersianNumber(paidOrdersCount);
 
   document.getElementById('kpiTotalReceivables').textContent = formatCurrency(totalReceivables);
   document.getElementById('kpiUnpaidCount').textContent = formatPersianNumber(unpaidCount);
 
+  // ارزش کارهای دوستانه به تومان
+  document.getElementById('kpiFriendlyValue').textContent = formatCurrency(friendlyTotalValue);
   document.getElementById('kpiFreeOrders').textContent = formatPersianNumber(freeCount);
   document.getElementById('kpiFreePercent').textContent = formatPersianNumber(freePercent) + '٪';
 }
 
 /**
- * رندر جدول سفارشات
+ * رندر دوگانه سفارشات: جدول دسکتاپ و کارت‌های لمسی موبایل
  */
-function renderOrdersTable(ordersList) {
+function renderOrders(ordersList) {
   const tbody = document.getElementById('ordersTableBody');
+  const mobileContainer = document.getElementById('ordersMobileContainer');
   const emptyState = document.getElementById('emptyState');
   const countPill = document.getElementById('orderCountPill');
 
   if (countPill) countPill.textContent = `${formatPersianNumber(ordersList.length)} مورد`;
   tbody.innerHTML = '';
+  mobileContainer.innerHTML = '';
 
   if (ordersList.length === 0) {
     emptyState.classList.remove('hidden');
@@ -531,7 +628,6 @@ function renderOrdersTable(ordersList) {
   }
   emptyState.classList.add('hidden');
 
-  // نقشه والدین برای بررسی فرزندان
   const parentMap = new Map();
   appState.orders.forEach(o => {
     if (o.parentOrderId) {
@@ -542,26 +638,24 @@ function renderOrdersTable(ordersList) {
   });
 
   ordersList.forEach(order => {
-    const tr = document.createElement('tr');
-    tr.className = 'hover:bg-slate-50/70 transition border-b border-slate-100';
-
-    // وضعیت رابطه والد/فرزند
     const hasChildren = parentMap.has(order.id);
     const childrenCount = hasChildren ? parentMap.get(order.id).length : 0;
     const isChild = Boolean(order.parentOrderId);
 
-    // برچسب نوع و ابعاد
     const typeBadge = getTypeBadge(order.type);
     const statusBadge = getStatusBadge(order.status);
-    const paymentBadge = getPaymentBadge(order.paymentStatus, order.remainingFee);
+    const paymentBadge = getPaymentBadge(order.paymentStatus, order.remainingFee, order.totalFee);
 
-    // آیکون درایو
-    const driveBtn = order.filesLink
-      ? `<a href="${escapeHtml(order.filesLink)}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1 px-2 py-1 rounded bg-indigo-50 text-indigo-700 hover:bg-indigo-100 transition text-[11px] font-medium" title="مشاهده فایل‌ها در گوگل درایو">
+    // ۱. رندر ردیف جدول برای دسکتاپ
+    const tr = document.createElement('tr');
+    tr.className = 'hover:bg-slate-50/70 transition border-b border-slate-100';
+
+    const driveBtnDesktop = order.filesLink
+      ? `<a href="${escapeHtml(order.filesLink)}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-indigo-50 text-indigo-700 hover:bg-indigo-100 transition text-[11px] font-medium" title="فایل‌ها در درایو">
           <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
           <span>درایو</span>
         </a>`
-      : `<span class="text-slate-300 text-[11px]">ندارد</span>`;
+      : `<span class="text-slate-300 text-[11px]">-</span>`;
 
     tr.innerHTML = `
       <td class="px-4 py-3 font-mono text-[11px] text-slate-500">
@@ -574,7 +668,7 @@ function renderOrdersTable(ordersList) {
         ` : ''}
         ${hasChildren ? `
           <div class="mt-0.5 inline-flex items-center gap-1 text-[10px] text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded cursor-pointer hover:bg-indigo-100" onclick="filterByParent('${escapeHtml(order.id)}')">
-            <span>📑 ${formatPersianNumber(childrenCount)} نسخه وابسته</span>
+            <span>📑 ${formatPersianNumber(childrenCount)} نسخه مرتبط</span>
           </div>
         ` : ''}
       </td>
@@ -591,20 +685,16 @@ function renderOrdersTable(ordersList) {
 
       <td class="px-4 py-3">
         ${typeBadge}
-        <div class="text-[11px] text-slate-500 mt-1 font-mono">${escapeHtml(order.formatSize || 'قطع نامشخص')}</div>
+        <div class="text-[11px] text-slate-600 mt-1 font-medium">${escapeHtml(order.formatType || 'قالب نامشخص')}</div>
       </td>
 
-      <td class="px-4 py-3 text-[11px] text-slate-600">
-        <div>ثبت: ${formatPersianDate(order.dateOrdered)}</div>
-        ${order.dateDelivered ? `<div class="text-emerald-600 mt-0.5">تحویل: ${formatPersianDate(order.dateDelivered)}</div>` : (order.dateDeadline ? `<div class="text-amber-600 mt-0.5">مهلت: ${formatPersianDate(order.dateDeadline)}</div>` : '')}
+      <td class="px-4 py-3 text-[11px] text-slate-600 font-mono">
+        <div>ثبت: ${escapeHtml(order.dateOrdered || '-')}</div>
+        ${order.dateDelivered ? `<div class="text-emerald-600 mt-0.5">تحویل: ${escapeHtml(order.dateDelivered)}</div>` : ''}
       </td>
 
       <td class="px-4 py-3">
         ${statusBadge}
-      </td>
-
-      <td class="px-4 py-3 font-semibold text-slate-700">
-        ${formatPersianNumber(order.workHours)} ساعت
       </td>
 
       <td class="px-4 py-3">
@@ -614,41 +704,82 @@ function renderOrdersTable(ordersList) {
         </div>
         <div class="mt-1 flex items-center gap-1.5">
           ${paymentBadge}
-          ${order.invoiceId ? `<span class="text-[10px] text-slate-400 font-mono">${escapeHtml(order.invoiceId)}</span>` : ''}
+          ${order.invoiceId ? `<span class="text-[10px] text-slate-400">${escapeHtml(order.invoiceId)}</span>` : ''}
         </div>
       </td>
 
       <td class="px-4 py-3 text-center">
-        ${driveBtn}
+        ${driveBtnDesktop}
       </td>
 
       <td class="px-4 py-3 text-center">
-        <div class="flex items-center justify-center gap-1.5">
-          <!-- دکمه افزودن نسخه وابسته / ریسایز -->
-          <button onclick="createVariantOrder('${escapeHtml(order.id)}')" title="ایجاد ریسایز / نسخه وابسته به این سفارش" class="p-1.5 text-slate-500 hover:text-indigo-600 hover:bg-slate-100 rounded-lg transition">
+        <div class="flex items-center justify-center gap-1">
+          <button onclick="createVariantOrder('${escapeHtml(order.id)}')" title="ایجاد ریسایز / نسخه مرتبط" class="p-1.5 text-slate-500 hover:text-indigo-600 hover:bg-slate-100 rounded-lg transition">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2"></path></svg>
           </button>
-
-          <!-- دکمه ویرایش -->
-          <button onclick="editOrder('${escapeHtml(order.id)}')" title="ویرایش سفارش" class="p-1.5 text-slate-500 hover:text-blue-600 hover:bg-slate-100 rounded-lg transition">
+          <button onclick="editOrder('${escapeHtml(order.id)}')" title="ویرایش" class="p-1.5 text-slate-500 hover:text-blue-600 hover:bg-slate-100 rounded-lg transition">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
           </button>
-
-          <!-- دکمه حذف -->
-          <button onclick="deleteOrder('${escapeHtml(order.id)}')" title="حذف سفارش" class="p-1.5 text-slate-500 hover:text-rose-600 hover:bg-slate-100 rounded-lg transition">
+          <button onclick="deleteOrder('${escapeHtml(order.id)}')" title="حذف" class="p-1.5 text-slate-500 hover:text-rose-600 hover:bg-slate-100 rounded-lg transition">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
           </button>
         </div>
       </td>
     `;
-
     tbody.appendChild(tr);
+
+    // ۲. رندر کارت بهینه‌شده برای موبایل (Mobile Card View)
+    const card = document.createElement('div');
+    card.className = 'p-4 space-y-3 bg-white hover:bg-slate-50 transition';
+
+    card.innerHTML = `
+      <div class="flex items-start justify-between gap-2">
+        <div>
+          <span class="text-[10px] font-mono text-slate-400">${escapeHtml(order.id)}</span>
+          <h4 class="text-xs font-bold text-slate-900 leading-snug mt-0.5">${escapeHtml(order.title)}</h4>
+          <p class="text-[11px] text-slate-600 mt-0.5 font-medium">${escapeHtml(order.clientName || 'نامشخص')}</p>
+        </div>
+        <div>${statusBadge}</div>
+      </div>
+
+      <div class="flex flex-wrap items-center gap-2 text-[11px] text-slate-500">
+        <div>${typeBadge}</div>
+        <div class="bg-slate-100 px-2 py-0.5 rounded text-slate-700 font-medium">${escapeHtml(order.formatType || 'قالب نامشخص')}</div>
+        <div class="font-mono">ثبت: ${escapeHtml(order.dateOrdered || '-')}</div>
+        ${order.dateDelivered ? `<div class="text-emerald-600 font-mono">تحویل: ${escapeHtml(order.dateDelivered)}</div>` : ''}
+      </div>
+
+      <div class="flex items-center justify-between pt-1 border-t border-slate-100">
+        <div class="space-y-0.5">
+          <div class="text-xs font-bold text-slate-900">
+            ${formatCurrency(order.totalFee)} <span class="text-[10px] text-slate-400 font-normal">تومان</span>
+          </div>
+          <div>${paymentBadge}</div>
+        </div>
+
+        <div class="flex items-center gap-1.5">
+          ${order.filesLink ? `
+            <a href="${escapeHtml(order.filesLink)}" target="_blank" rel="noopener noreferrer" class="p-2 rounded-xl bg-indigo-50 text-indigo-700 hover:bg-indigo-100 transition" title="درایو">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
+            </a>
+          ` : ''}
+          <button onclick="createVariantOrder('${escapeHtml(order.id)}')" title="افزودن ریسایز" class="p-2 rounded-xl bg-slate-100 text-slate-600 hover:bg-indigo-50 hover:text-indigo-600 transition">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2"></path></svg>
+          </button>
+          <button onclick="editOrder('${escapeHtml(order.id)}')" title="ویرایش" class="p-2 rounded-xl bg-slate-100 text-slate-600 hover:bg-blue-50 hover:text-blue-600 transition">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+          </button>
+          <button onclick="deleteOrder('${escapeHtml(order.id)}')" title="حذف" class="p-2 rounded-xl bg-slate-100 text-slate-600 hover:bg-rose-50 hover:text-rose-600 transition">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+          </button>
+        </div>
+      </div>
+    `;
+
+    mobileContainer.appendChild(card);
   });
 }
 
-/**
- * فیلتر سریع بر اساس سفارش والد
- */
 function filterByParent(parentId) {
   const searchInput = document.getElementById('searchInput');
   if (searchInput) {
@@ -658,10 +789,12 @@ function filterByParent(parentId) {
 }
 
 /**
- * بروزرسانی نمودارهای Chart.js
+ * =========================================================================
+ * بخش ۴: نمودارهای Chart.js با پشتیبانی از کارهای دوستانه
+ * =========================================================================
  */
 function updateCharts(ordersList) {
-  // ۱. نمودار توزیع سهم دیجیتال / چاپ / هردو
+  // ۱. توزیع نوع پروژه (دیجیتال / چاپ / هردو)
   let digitalCount = 0;
   let printCount = 0;
   let bothCount = 0;
@@ -694,34 +827,44 @@ function updateCharts(ordersList) {
         plugins: {
           legend: {
             position: 'bottom',
-            labels: { font: { family: 'Vazirmatn' } }
+            labels: { font: { family: 'Vazirmatn', size: 11 } }
           }
         },
-        cutout: '68%'
+        cutout: '70%'
       }
     });
   }
 
-  // ۲. نمودار میله‌ای مالی: درآمد وصول‌شده در برابر طلب‌ها به تفکیک ماه‌ها
-  const monthlyRevenue = {};
-  const monthlyReceivables = {};
+  // ۲. گزارش مالی ماهانه شمسی: درآمد، طلب و ارزش کارهای دوستانه
+  const monthlyData = {};
 
   ordersList.forEach(o => {
-    const monthKey = (o.dateOrdered || '').slice(0, 7) || 'نامشخص';
-    if (!monthlyRevenue[monthKey]) {
-      monthlyRevenue[monthKey] = 0;
-      monthlyReceivables[monthKey] = 0;
+    // استخراج سال و ماه شمسی (مثلاً 1403/07)
+    let key = 'نامشخص';
+    if (o.dateOrdered && o.dateOrdered.length >= 7) {
+      key = o.dateOrdered.slice(0, 7);
     }
-    monthlyRevenue[monthKey] += Number(o.amountPaid) || 0;
-    const rem = Number(o.remainingFee) || Math.max(0, (Number(o.totalFee) || 0) - (Number(o.amountPaid) || 0));
-    if (o.paymentStatus !== 'Free') {
-      monthlyReceivables[monthKey] += rem;
+
+    if (!monthlyData[key]) {
+      monthlyData[key] = { revenue: 0, receivables: 0, friendly: 0 };
+    }
+
+    const fee = Number(o.totalFee) || 0;
+    const paid = Number(o.amountPaid) || 0;
+
+    if (o.paymentStatus === 'Free') {
+      monthlyData[key].friendly += fee;
+    } else {
+      monthlyData[key].revenue += paid;
+      const rem = Number(o.remainingFee) || Math.max(0, fee - paid);
+      monthlyData[key].receivables += rem;
     }
   });
 
-  const labels = Object.keys(monthlyRevenue).sort();
-  const revData = labels.map(l => monthlyRevenue[l]);
-  const recData = labels.map(l => monthlyReceivables[l]);
+  const labels = Object.keys(monthlyData).sort();
+  const revList = labels.map(l => monthlyData[l].revenue);
+  const recList = labels.map(l => monthlyData[l].receivables);
+  const friList = labels.map(l => monthlyData[l].friendly);
 
   const trendCtx = document.getElementById('revenueTrendChart')?.getContext('2d');
   if (trendCtx) {
@@ -731,18 +874,24 @@ function updateCharts(ordersList) {
     appState.charts.revenueTrend = new Chart(trendCtx, {
       type: 'bar',
       data: {
-        labels: labels.length ? labels : ['داده‌ای موجود نیست'],
+        labels: labels.length ? labels : ['بدون داده'],
         datasets: [
           {
             label: 'درآمد وصول‌شده',
-            data: revData.length ? revData : [0],
+            data: revList.length ? revList : [0],
             backgroundColor: '#10b981',
             borderRadius: 6
           },
           {
             label: 'طلب‌های معوق',
-            data: recData.length ? recData : [0],
+            data: recList.length ? recList : [0],
             backgroundColor: '#fb7185',
+            borderRadius: 6
+          },
+          {
+            label: 'ارزش کار دوستانه',
+            data: friList.length ? friList : [0],
+            backgroundColor: '#a855f7',
             borderRadius: 6
           }
         ]
@@ -756,11 +905,11 @@ function updateCharts(ordersList) {
         scales: {
           x: {
             grid: { display: false },
-            ticks: { font: { family: 'Vazirmatn' } }
+            ticks: { font: { family: 'Vazirmatn', size: 10 } }
           },
           y: {
             ticks: {
-              font: { family: 'Vazirmatn' },
+              font: { family: 'Vazirmatn', size: 10 },
               callback: val => (val / 1000000).toLocaleString('fa-IR') + ' م'
             }
           }
@@ -771,18 +920,20 @@ function updateCharts(ordersList) {
 }
 
 /**
- * مدیریت فرم سفارش (ثبت یا ویرایش)
+ * =========================================================================
+ * بخش ۵: مودال و فرم سفارش (ثبت / ویرایش)
+ * =========================================================================
  */
 function handleOrderFormSubmit(e) {
   e.preventDefault();
 
   const isFree = document.getElementById('formIsFree').checked;
-  const totalFee = isFree ? 0 : (Number(document.getElementById('formTotalFee').value) || 0);
+  const totalFee = Number(document.getElementById('formTotalFee').value) || 0;
   const amountPaid = isFree ? 0 : (Number(document.getElementById('formAmountPaid').value) || 0);
-  const remaining = Math.max(0, totalFee - amountPaid);
+  const remaining = isFree ? 0 : Math.max(0, totalFee - amountPaid);
 
   let paymentStatus = 'Unpaid';
-  if (isFree || totalFee === 0) {
+  if (isFree) {
     paymentStatus = 'Free';
   } else if (amountPaid >= totalFee && totalFee > 0) {
     paymentStatus = 'Paid';
@@ -799,41 +950,35 @@ function handleOrderFormSubmit(e) {
     clientName: document.getElementById('formClientName').value.trim(),
     clientContact: document.getElementById('formClientContact').value.trim(),
     type: document.getElementById('formType').value,
-    formatSize: document.getElementById('formFormatSize').value.trim(),
-    dateOrdered: document.getElementById('formDateOrdered').value,
-    dateDeadline: document.getElementById('formDateDeadline').value,
-    dateDelivered: document.getElementById('formDateDelivered').value,
+    formatType: document.getElementById('formFormatType').value.trim(),
+    dateOrdered: document.getElementById('formDateOrdered').value.trim(),
+    dateDelivered: document.getElementById('formDateDelivered').value.trim(),
     status: document.getElementById('formStatus').value,
-    workHours: Number(document.getElementById('formWorkHours').value) || 0,
     parentOrderId: document.getElementById('formParentOrderId').value,
     invoiceId: document.getElementById('formInvoiceId').value.trim(),
     totalFee: totalFee,
     amountPaid: amountPaid,
     remainingFee: remaining,
     paymentStatus: paymentStatus,
+    isFree: isFree,
     filesLink: document.getElementById('formFilesLink').value.trim()
   };
 
   saveOrderApi(payload, isEdit);
 }
 
-/**
- * باز کردن مودال برای سفارش جدید
- */
 function openOrderModal() {
   document.getElementById('orderForm').reset();
   document.getElementById('formOrderId').value = '';
   document.getElementById('orderModalTitle').textContent = 'ثبت سفارش جدید';
-  document.getElementById('formDateOrdered').value = new Date().toISOString().split('T')[0];
+  document.getElementById('formDateOrdered').value = getTodayJalali();
+  document.getElementById('formDateDelivered').value = '';
   document.getElementById('formIsFree').checked = false;
   toggleFreeOrder(false);
   buildClientAndInvoiceLists();
   document.getElementById('orderModal').classList.remove('hidden');
 }
 
-/**
- * باز کردن مودال جهت ایجاد نسخه وابسته / ریسایز
- */
 function createVariantOrder(parentOrderId) {
   const parent = appState.orders.find(o => o.id === parentOrderId);
   openOrderModal();
@@ -847,9 +992,6 @@ function createVariantOrder(parentOrderId) {
   }
 }
 
-/**
- * باز کردن مودال برای ویرایش سفارش موجود
- */
 function editOrder(orderId) {
   const order = appState.orders.find(o => o.id === orderId);
   if (!order) return;
@@ -861,19 +1003,23 @@ function editOrder(orderId) {
   document.getElementById('formClientName').value = order.clientName || '';
   document.getElementById('formClientContact').value = order.clientContact || '';
   document.getElementById('formType').value = order.type || 'Digital';
-  document.getElementById('formFormatSize').value = order.formatSize || '';
+  document.getElementById('formFormatType').value = order.formatType || order.formatSize || '';
   document.getElementById('formDateOrdered').value = order.dateOrdered || '';
-  document.getElementById('formDateDeadline').value = order.dateDeadline || '';
   document.getElementById('formDateDelivered').value = order.dateDelivered || '';
-  document.getElementById('formStatus').value = order.status || 'In Progress';
-  document.getElementById('formWorkHours').value = order.workHours || 0;
+  
+  // نگاشت وضعیت به ۳ حالت درخواستی
+  let st = order.status;
+  if (st === 'Completed') st = 'Delivered';
+  else if (st === 'Review') st = 'In Progress';
+  document.getElementById('formStatus').value = st || 'In Progress';
+
   document.getElementById('formParentOrderId').value = order.parentOrderId || '';
   document.getElementById('formInvoiceId').value = order.invoiceId || '';
   document.getElementById('formTotalFee').value = order.totalFee || 0;
   document.getElementById('formAmountPaid').value = order.amountPaid || 0;
   document.getElementById('formFilesLink').value = order.filesLink || '';
 
-  const isFree = order.paymentStatus === 'Free' || (Number(order.totalFee) === 0);
+  const isFree = (order.paymentStatus === 'Free');
   document.getElementById('formIsFree').checked = isFree;
   toggleFreeOrder(isFree);
 
@@ -885,31 +1031,39 @@ function closeOrderModal() {
 }
 
 /**
- * فعال/غیرفعال کردن حالت رایگان در فرم
+ * فعال/غیرفعال کردن حالت دوستانه
+ * ارزش کار همچنان قابل وارد کردن است اما مبلغ دریافتی صفر می‌شود
  */
 function toggleFreeOrder(isFree) {
-  const container = document.getElementById('financeInputsContainer');
-  const feeInput = document.getElementById('formTotalFee');
   const paidInput = document.getElementById('formAmountPaid');
+  const labelFee = document.getElementById('labelTotalFee');
+  const hintFee = document.getElementById('hintTotalFee');
+  const hintPaid = document.getElementById('hintAmountPaid');
 
   if (isFree) {
-    feeInput.value = 0;
     paidInput.value = 0;
-    feeInput.disabled = true;
     paidInput.disabled = true;
-    container.classList.add('opacity-50');
+    paidInput.classList.add('bg-slate-100', 'text-slate-400');
+    labelFee.textContent = 'ارزش واقعی / تخمینی کار دوستانه (تومان)';
+    hintFee.textContent = 'این مبلغ جهت ثبت چند تومان کار دوستانه در آمار محاسبه می‌شود.';
+    hintPaid.textContent = 'در کارهای دوستانه دریافت وجه صفر منظور می‌گردد.';
   } else {
-    feeInput.disabled = false;
     paidInput.disabled = false;
-    container.classList.remove('opacity-50');
+    paidInput.classList.remove('bg-slate-100', 'text-slate-400');
+    labelFee.textContent = 'مبلغ کل هزینه پروژه (تومان) *';
+    hintFee.textContent = 'ارزش کل سفارش توافق‌شده با مشتری.';
+    hintPaid.textContent = 'مبلغ واریزی تا این لحظه.';
   }
 }
 
 /**
- * مودال تنظیمات URL گوگل اپس اسکریپت
+ * =========================================================================
+ * بخش ۶: تنظیمات URL و توابع کمکی
+ * =========================================================================
  */
 function openSettingsModal() {
   document.getElementById('gasUrlInput').value = appState.gasUrl;
+  document.getElementById('newPasscodeInput').value = '';
   document.getElementById('settingsModal').classList.remove('hidden');
 }
 
@@ -938,9 +1092,6 @@ function clearGasUrl() {
   loadLocalDemoData();
 }
 
-/**
- * توابع کمکی تبدیل و فرمت‌بندی
- */
 function formatPersianNumber(n) {
   if (n === null || n === undefined || isNaN(n)) return '۰';
   return Number(n).toLocaleString('fa-IR');
@@ -949,11 +1100,6 @@ function formatPersianNumber(n) {
 function formatCurrency(n) {
   if (!n || isNaN(n)) return '۰';
   return Number(n).toLocaleString('fa-IR');
-}
-
-function formatPersianDate(dateStr) {
-  if (!dateStr) return '-';
-  return dateStr;
 }
 
 function getTypeBadge(type) {
@@ -968,29 +1114,27 @@ function getTypeBadge(type) {
 function getStatusBadge(status) {
   switch (status) {
     case 'In Progress':
-      return `<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-amber-50 text-amber-700 border border-amber-200">در حال طراحی</span>`;
     case 'Review':
-      return `<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-blue-50 text-blue-700 border border-blue-200">بازبینی کارفرما</span>`;
-    case 'Completed':
-      return `<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-teal-50 text-teal-700 border border-teal-200">تکمیل‌شده</span>`;
+      return `<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-amber-50 text-amber-700 border border-amber-200">در حال انجام</span>`;
     case 'Delivered':
-      return `<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">تحویل داده‌شده</span>`;
+    case 'Completed':
+      return `<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">تحویل داده شده</span>`;
     case 'Canceled':
-      return `<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-rose-50 text-rose-700 border border-rose-200">لغوشده</span>`;
+      return `<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-rose-50 text-rose-700 border border-rose-200">لغو شده</span>`;
     default:
-      return `<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-slate-100 text-slate-700">${status || 'نامشخص'}</span>`;
+      return `<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-slate-100 text-slate-700">در حال انجام</span>`;
   }
 }
 
-function getPaymentBadge(status, remaining) {
+function getPaymentBadge(status, remaining, totalFee) {
   if (status === 'Free') {
-    return `<span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-purple-100 text-purple-700">رایگان</span>`;
+    return `<span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-purple-100 text-purple-800" title="کار دوستانه بدون دریافت وجه">دوستانه / رایگان</span>`;
   } else if (status === 'Paid') {
-    return `<span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-emerald-100 text-emerald-700">تسویه کامل</span>`;
+    return `<span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800">تسویه کامل</span>`;
   } else if (status === 'Partial') {
-    return `<span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-amber-100 text-amber-800">قسطی (طلب: ${formatCurrency(remaining)})</span>`;
+    return `<span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-900">قسطی (طلب: ${formatCurrency(remaining)})</span>`;
   }
-  return `<span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-rose-100 text-rose-700">طلب تسویه‌نشده</span>`;
+  return `<span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-rose-100 text-rose-800">طلب تسویه‌نشده</span>`;
 }
 
 function escapeHtml(str) {
