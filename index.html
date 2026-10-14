@@ -1,642 +1,2357 @@
 <!DOCTYPE html>
-<html lang="fa" dir="rtl">
+<html lang="fa" dir="rtl" class="dark">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>پنل مدیریت سفارشات طراحی</title>
-  
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>سیستم مدیریت سفارشات و امور مالی طراحی گرافیک</title>
+
+  <!-- فونت فارسی وزیرمتن -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
+      darkMode: 'class',
       theme: {
         extend: {
+          fontFamily: {
+            sans: ['Vazirmatn', 'Tahoma', 'sans-serif'],
+          },
           colors: {
             brand: {
               50: '#eef2ff',
               100: '#e0e7ff',
               500: '#6366f1',
               600: '#4f46e5',
-              700: '#4338ca'
+              700: '#4338ca',
             }
           }
         }
       }
-    }
+    };
   </script>
 
   <!-- Chart.js CDN -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
 
-  <!-- Font & Custom Styles -->
-  <link rel="stylesheet" href="style.css">
+  <style>
+    body {
+      font-family: 'Vazirmatn', Tahoma, sans-serif;
+    }
+    /* اسکرول‌بار سفارشی */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: rgba(148, 163, 184, 0.1);
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(100, 116, 139, 0.4);
+      border-radius: 9999px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(100, 116, 139, 0.7);
+    }
+    .tree-branch {
+      position: relative;
+    }
+    .tree-branch::before {
+      content: '';
+      position: absolute;
+      right: -12px;
+      top: -14px;
+      bottom: 50%;
+      width: 10px;
+      border-right: 2px solid #6366f1;
+      border-bottom: 2px solid #6366f1;
+      border-bottom-right-radius: 6px;
+    }
+  </style>
 </head>
-<body class="bg-slate-50 text-slate-800 antialiased min-h-screen pb-12 select-none">
+<body class="bg-slate-50 text-slate-800 dark:bg-slate-950 dark:text-slate-100 min-h-screen transition-colors duration-200">
 
-  <!-- ======================================================== -->
-  <!-- صفحه لاگین و احراز هویت امن سمت دیتابیس (Secure Login Screen) -->
-  <!-- ======================================================== -->
-  <div id="loginScreen" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/90 backdrop-blur-md p-4 transition-all duration-300">
-    <div class="bg-white w-full max-w-sm rounded-3xl p-6 sm:p-8 shadow-2xl border border-slate-100 text-center space-y-6">
-      <div class="w-16 h-16 rounded-2xl bg-gradient-to-tr from-indigo-600 to-violet-500 mx-auto flex items-center justify-center text-white shadow-lg shadow-indigo-200">
-        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
-        </svg>
-      </div>
+  <!-- نوار اعلان (Toast Notification) -->
+  <div id="toastContainer" class="fixed bottom-5 left-5 z-50 flex flex-col gap-2 max-w-sm w-full pointer-events-none"></div>
 
-      <div>
-        <h2 class="text-xl font-bold text-slate-900">ورود به پنل سفارشات</h2>
-        <p class="text-xs text-slate-500 mt-1">احراز هویت ایمن با رمز عبور ذخیره‌شده در سرور</p>
-      </div>
-
-      <form id="loginForm" onsubmit="handleLoginSubmit(event)" class="space-y-4">
+  <!-- هدر اصلی -->
+  <header class="sticky top-0 z-30 backdrop-blur-md bg-white/85 dark:bg-slate-900/85 border-b border-slate-200 dark:border-slate-800 shadow-sm">
+    <div class="max-w-[1440px] mx-auto px-4 sm:px-6 py-3.5 flex flex-wrap items-center justify-between gap-4">
+      <!-- لوگو و عنوان -->
+      <div class="flex items-center gap-3">
+        <div class="w-11 h-11 rounded-2xl bg-gradient-to-br from-indigo-600 to-violet-600 flex items-center justify-center text-white shadow-lg shadow-indigo-500/30">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9.53 16.122a3 3 0 00-5.78 1.128 2.25 2.25 0 01-2.4 2.245 4.5 4.5 0 008.4-2.245c0-.399-.078-.78-.22-1.128zm0 0a15.998 15.998 0 003.388-1.62m-5.043-.025a15.994 15.994 0 011.622-3.395m3.42 3.42a15.995 15.995 0 004.764-4.648l3.876-5.814a1.151 1.151 0 00-1.597-1.597L14.146 6.32a15.996 15.996 0 00-4.649 4.763m3.42 3.42a6.776 6.776 0 00-3.42-3.42" />
+          </svg>
+        </div>
         <div>
-          <input type="password" id="loginPinInput" autofocus placeholder="رمز عبور" class="w-full text-center tracking-widest text-lg py-3 px-4 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 font-mono">
-        </div>
-        <div id="loginError" class="text-xs text-rose-600 font-medium hidden">رمز عبور نادرست است!</div>
-        <button type="submit" id="loginSubmitBtn" class="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl shadow-md shadow-indigo-200 transition text-sm flex items-center justify-center gap-2">
-          <span>ورود به پنل</span>
-          <span id="loginSpinner" class="hidden w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
-        </button>
-      </form>
-
-      <p class="text-[11px] text-slate-400">رمز عبور در سرور گوگل هش شده و در فرانت‌اند یا کلاینت قابل رویت نیست.</p>
-    </div>
-  </div>
-
-  <!-- ======================================================== -->
-  <!-- بدنه اصلی برنامه پس از لاگین -->
-  <!-- ======================================================== -->
-  <div id="appContainer" class="hidden">
-    <!-- هدر واکنش‌گرا -->
-    <header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-sm">
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-        <!-- لوگو و عنوان -->
-        <div class="flex items-center gap-3">
-          <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-violet-500 flex items-center justify-center text-white shadow-md">
-            <svg class="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"></path>
-            </svg>
-          </div>
-          <div>
-            <h1 class="text-base sm:text-lg font-bold text-slate-900 leading-tight">استودیو طراحی شخصی</h1>
-            <p class="text-[11px] sm:text-xs text-slate-500">مدیریت سفارشات، درآمد، کارهای لغوشده و دوستانه</p>
-          </div>
-        </div>
-
-        <!-- کنترل‌های بالای صفحه -->
-        <div class="flex items-center gap-1.5 sm:gap-2">
-          <div id="connectionStatusBadge" class="hidden md:flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-amber-50 text-amber-700 border border-amber-200 cursor-pointer" onclick="openSettingsModal()" title="تنظیمات API">
-            <span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
-            <span id="connectionStatusText">حالت دمو</span>
-          </div>
-
-          <button onclick="fetchData()" id="refreshBtn" class="p-2 text-slate-600 hover:text-indigo-600 hover:bg-slate-100 rounded-lg transition" title="بروزرسانی داده‌ها">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
-            </svg>
-          </button>
-
-          <button onclick="openSettingsModal()" class="p-2 text-slate-600 hover:text-indigo-600 hover:bg-slate-100 rounded-lg transition" title="تنظیمات">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-            </svg>
-          </button>
-
-          <button onclick="handleLogout()" class="p-2 text-slate-500 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition" title="خروج از حساب">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
-            </svg>
-          </button>
-
-          <button onclick="openOrderModal()" class="flex items-center gap-1.5 bg-indigo-600 hover:bg-indigo-700 text-white px-3 sm:px-4 py-2 rounded-xl font-medium text-xs sm:text-sm shadow-sm transition shadow-indigo-200">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
-            </svg>
-            <span class="hidden xs:inline">ثبت سفارش جدید</span>
-          </button>
-        </div>
-      </div>
-    </header>
-
-    <!-- محتوای اصلی -->
-    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5 space-y-5">
-
-      <!-- کارت‌های شاخص عملکرد (KPIs) شامل کارهای لغوشده و دوستانه -->
-      <section class="grid grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4">
-        <!-- تعداد سفارشات -->
-        <div class="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/80 card-shadow card-hover">
-          <div class="flex items-center justify-between text-slate-500 mb-1.5">
-            <span class="text-[11px] sm:text-xs font-semibold">تعداد سفارشات</span>
-            <span class="p-1.5 rounded-lg bg-blue-50 text-blue-600">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
-              </svg>
-            </span>
-          </div>
-          <div class="flex items-baseline gap-1.5">
-            <span id="kpiTotalOrders" class="text-xl sm:text-2xl font-extrabold text-slate-900">۰</span>
-            <span class="text-[11px] text-slate-500">پروژه</span>
-          </div>
-          <div class="mt-2 text-[11px] text-slate-500 flex justify-between flex-wrap gap-1">
-            <span>تحویل: <strong id="kpiDeliveredOrders" class="text-emerald-600 font-bold">۰</strong></span>
-            <span>جاری: <strong id="kpiActiveOrders" class="text-amber-600 font-bold">۰</strong></span>
-          </div>
-        </div>
-
-        <!-- درآمد وصول‌شده -->
-        <div class="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/80 card-shadow card-hover">
-          <div class="flex items-center justify-between text-slate-500 mb-1.5">
-            <span class="text-[11px] sm:text-xs font-semibold">درآمد وصول‌شده</span>
-            <span class="p-1.5 rounded-lg bg-emerald-50 text-emerald-600">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-              </svg>
-            </span>
-          </div>
-          <div class="flex items-baseline gap-1">
-            <span id="kpiTotalRevenue" class="text-xl sm:text-2xl font-extrabold text-emerald-600">۰</span>
-            <span class="text-[11px] text-slate-500">تومان</span>
-          </div>
-          <div class="mt-2 text-[11px] text-slate-500">
-            <span>تسویه کامل: <strong id="kpiPaidOrdersCount" class="text-slate-700">۰</strong> مورد</span>
-          </div>
-        </div>
-
-        <!-- طلب‌ها و معوقات -->
-        <div class="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/80 card-shadow card-hover">
-          <div class="flex items-center justify-between text-slate-500 mb-1.5">
-            <span class="text-[11px] sm:text-xs font-semibold">طلب‌ها و معوقات</span>
-            <span class="p-1.5 rounded-lg bg-rose-50 text-rose-600">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6"></path>
-              </svg>
-            </span>
-          </div>
-          <div class="flex items-baseline gap-1">
-            <span id="kpiTotalReceivables" class="text-xl sm:text-2xl font-extrabold text-rose-600">۰</span>
-            <span class="text-[11px] text-slate-500">تومان</span>
-          </div>
-          <div class="mt-2 text-[11px] text-slate-500">
-            <span>تعداد مطالبات: <strong id="kpiUnpaidCount" class="text-slate-700">۰</strong> فقره</span>
-          </div>
-        </div>
-
-        <!-- هزینه و ارزش سفارش‌های لغوشده (محاسبه هزینه طراحی کارفرماهای کنسلی) -->
-        <div class="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/80 card-shadow card-hover">
-          <div class="flex items-center justify-between text-slate-500 mb-1.5">
-            <span class="text-[11px] sm:text-xs font-semibold text-amber-800">ارزش سفارش‌های لغوشده</span>
-            <span class="p-1.5 rounded-lg bg-amber-50 text-amber-600">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"></path>
-              </svg>
-            </span>
-          </div>
-          <div class="flex items-baseline gap-1">
-            <span id="kpiCanceledValue" class="text-xl sm:text-2xl font-extrabold text-amber-600">۰</span>
-            <span class="text-[11px] text-slate-500">تومان</span>
-          </div>
-          <div class="mt-2 text-[11px] text-slate-500 flex justify-between">
-            <span>تعداد: <strong id="kpiCanceledCount" class="text-amber-800">۰</strong> کار کنسل‌شده</span>
-            <span>دریافتی: <strong id="kpiCanceledPaid">۰</strong></span>
-          </div>
-        </div>
-
-        <!-- ارزش کارهای دوستانه / رایگان -->
-        <div class="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/80 card-shadow card-hover col-span-2 lg:col-span-1">
-          <div class="flex items-center justify-between text-slate-500 mb-1.5">
-            <span class="text-[11px] sm:text-xs font-semibold text-purple-800">ارزش کارهای دوستانه</span>
-            <span class="p-1.5 rounded-lg bg-purple-50 text-purple-600">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-              </svg>
-            </span>
-          </div>
-          <div class="flex items-baseline gap-1">
-            <span id="kpiFriendlyValue" class="text-xl sm:text-2xl font-extrabold text-purple-600">۰</span>
-            <span class="text-[11px] text-slate-500">تومان</span>
-          </div>
-          <div class="mt-2 text-[11px] text-slate-500 flex justify-between">
-            <span>تعداد: <strong id="kpiFreeOrders" class="text-purple-700">۰</strong> سفارش دوستانه</span>
-            <span>(<span id="kpiFreePercent">۰٪</span>)</span>
-          </div>
-        </div>
-      </section>
-
-      <!-- نوار فیلترهای پیشرفته و بازه‌های زمانی -->
-      <section class="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/80 card-shadow space-y-4">
-        <!-- ردیف انتخاب بازه زمانی -->
-        <div class="flex flex-wrap items-center justify-between gap-2 sm:gap-3 pb-3 border-b border-slate-100">
-          <div class="flex items-center gap-1 sm:gap-1.5 overflow-x-auto w-full sm:w-auto pb-1 sm:pb-0">
-            <span class="text-xs font-semibold text-slate-500 whitespace-nowrap ml-1">بازه زمانی:</span>
-            <button onclick="setTimeframeFilter('all')" data-tf="all" class="tf-btn px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-medium bg-indigo-50 text-indigo-600 border border-indigo-200 transition whitespace-nowrap">همه</button>
-            <button onclick="setTimeframeFilter('weekly')" data-tf="weekly" class="tf-btn px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-medium text-slate-600 hover:bg-slate-100 transition whitespace-nowrap">هفتگی (۷ روز)</button>
-            <button onclick="setTimeframeFilter('monthly')" data-tf="monthly" class="tf-btn px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-medium text-slate-600 hover:bg-slate-100 transition whitespace-nowrap">ماهانه (۳۰ روز)</button>
-            <button onclick="setTimeframeFilter('six_months')" data-tf="six_months" class="tf-btn px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-medium text-slate-600 hover:bg-slate-100 transition whitespace-nowrap">شش‌ماهه</button>
-            <button onclick="setTimeframeFilter('yearly')" data-tf="yearly" class="tf-btn px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-medium text-slate-600 hover:bg-slate-100 transition whitespace-nowrap">سالانه</button>
-          </div>
-
-          <div class="text-xs text-slate-500 mr-auto sm:mr-0 font-medium" id="filteredResultsCount">
-            نمایش ۰ از ۰ سفارش
-          </div>
-        </div>
-
-        <!-- فیلترهای چندبعدی -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-2.5 sm:gap-3">
-          <div>
-            <label class="block text-xs font-medium text-slate-600 mb-1">جستجو</label>
-            <input type="text" id="searchInput" oninput="applyFilters()" placeholder="عنوان، قالب، کارفرما، فاکتور..." class="w-full text-xs px-3 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500">
-          </div>
-
-          <div>
-            <label class="block text-xs font-medium text-slate-600 mb-1">نوع رسانه</label>
-            <select id="typeFilter" onchange="applyFilters()" class="w-full text-xs px-3 py-2 rounded-xl border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500">
-              <option value="all">همه انواع</option>
-              <option value="Digital">دیجیتال</option>
-              <option value="Print">چاپ</option>
-              <option value="Both">هر دو (دیجیتال و چاپ)</option>
-            </select>
-          </div>
-
-          <div>
-            <label class="block text-xs font-medium text-slate-600 mb-1">سفارش‌دهنده / کارفرما</label>
-            <select id="clientFilter" onchange="applyFilters()" class="w-full text-xs px-3 py-2 rounded-xl border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500">
-              <option value="all">همه کارفرمایان</option>
-            </select>
-          </div>
-
-          <div>
-            <label class="block text-xs font-medium text-slate-600 mb-1">وضعیت مالی</label>
-            <select id="financeFilter" onchange="applyFilters()" class="w-full text-xs px-3 py-2 rounded-xl border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500">
-              <option value="all">همه وضعیت‌ها</option>
-              <option value="Paid">تسویه کامل</option>
-              <option value="Partial">قسطی / پرداخت ناقص</option>
-              <option value="Unpaid">طلب تسویه‌نشده</option>
-              <option value="Free">دوستانه / رایگان</option>
-            </select>
-          </div>
-
-          <div>
-            <label class="block text-xs font-medium text-slate-600 mb-1">وضعیت سفارش</label>
-            <select id="statusFilter" onchange="applyFilters()" class="w-full text-xs px-3 py-2 rounded-xl border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500">
-              <option value="all">همه وضعیت‌ها</option>
-              <option value="In Progress">در حال انجام</option>
-              <option value="Delivered">تحویل داده شده</option>
-              <option value="Canceled">لغو شده</option>
-            </select>
-          </div>
-        </div>
-      </section>
-
-      <!-- نمودارهای Chart.js -->
-      <section class="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-5">
-        <div class="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/80 card-shadow flex flex-col">
-          <div class="flex items-center justify-between mb-3">
-            <div>
-              <h3 class="text-xs sm:text-sm font-bold text-slate-900">سهم رسانه (دیجیتال / چاپ)</h3>
-              <p class="text-[11px] text-slate-500">تفکیک پروژه‌ها بر اساس نوع خروجی</p>
-            </div>
-            <span class="text-[10px] text-slate-400 font-mono">Chart.js</span>
-          </div>
-          <div class="relative flex-1 min-h-[200px] flex items-center justify-center">
-            <canvas id="typeDistributionChart"></canvas>
-          </div>
-        </div>
-
-        <div class="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/80 card-shadow lg:col-span-2 flex flex-col">
-          <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
-            <div>
-              <h3 class="text-xs sm:text-sm font-bold text-slate-900">جریان مالی و درآمدی در ماه‌های شمسی</h3>
-              <p class="text-[11px] text-slate-500">درآمد وصول‌شده، طلب‌ها، کارهای لغوشده و دوستانه</p>
-            </div>
-            <div class="flex items-center gap-3 text-[11px]">
-              <div class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span><span>درآمد</span></div>
-              <div class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-rose-400"></span><span>طلب</span></div>
-              <div class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span><span>لغوشده</span></div>
-              <div class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-purple-500"></span><span>دوستانه</span></div>
-            </div>
-          </div>
-          <div class="relative flex-1 min-h-[200px]">
-            <canvas id="revenueTrendChart"></canvas>
-          </div>
-        </div>
-      </section>
-
-      <!-- جدول دسکتاپ و کارت‌های لمسی موبایل -->
-      <section class="bg-white rounded-2xl border border-slate-200/80 card-shadow overflow-hidden">
-        <div class="p-3.5 sm:p-4 border-b border-slate-100 flex flex-wrap items-center justify-between gap-2">
           <div class="flex items-center gap-2">
-            <h2 class="text-xs sm:text-sm font-bold text-slate-900">لیست جامع سفارشات</h2>
-            <span id="orderCountPill" class="text-xs px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-600 font-semibold">۰ مورد</span>
+            <h1 class="text-lg sm:text-xl font-extrabold tracking-tight text-slate-900 dark:text-white">استودیو مدیریت گرافیک و مالی</h1>
+            <span id="connectionBadge" class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300">
+              <span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
+              حالت محلی
+            </span>
           </div>
-          <div class="text-[11px] text-slate-400">
-            قابلیت مشاهده تمام اتودها، ریسایزها و پیوندهای گروهی
-          </div>
+          <p id="todayJalaliHeader" class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">امروز: —</p>
         </div>
+      </div>
 
-        <div class="hidden md:block table-container">
-          <table class="w-full text-xs text-right">
-            <thead class="bg-slate-50/80 text-slate-600 uppercase border-b border-slate-200/60 font-semibold">
-              <tr>
-                <th class="px-4 py-3">کد / رابطه</th>
-                <th class="px-4 py-3">عنوان سفارش</th>
-                <th class="px-4 py-3">سفارش‌دهنده</th>
-                <th class="px-4 py-3">نوع و قالب</th>
-                <th class="px-4 py-3">تاریخ ثبت / تحویل (شمسی)</th>
-                <th class="px-4 py-3">وضعیت کار</th>
-                <th class="px-4 py-3">فاکتور و مبلغ</th>
-                <th class="px-4 py-3 text-center">فایل درایو</th>
-                <th class="px-4 py-3 text-center">عملیات</th>
-              </tr>
-            </thead>
-            <tbody id="ordersTableBody" class="divide-y divide-slate-100">
-              <!-- ردیف‌های جدول -->
-            </tbody>
-          </table>
-        </div>
-
-        <div id="ordersMobileContainer" class="md:hidden divide-y divide-slate-100">
-          <!-- کارت‌های موبایل -->
-        </div>
-
-        <div id="emptyState" class="hidden p-10 text-center">
-          <div class="w-12 h-12 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center mx-auto mb-2">
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path>
-            </svg>
-          </div>
-          <p class="text-xs sm:text-sm font-medium text-slate-700">هیچ سفارشی یافت نشد!</p>
-          <p class="text-[11px] text-slate-400 mt-0.5">فیلترها را تنظیم کنید یا سفارش جدیدی بیافزایید.</p>
-        </div>
-
-        <div id="loadingState" class="hidden p-10 text-center">
-          <div class="inline-block w-7 h-7 border-3 border-indigo-600 border-t-transparent rounded-full animate-spin mb-2"></div>
-          <p class="text-xs text-slate-500 font-medium">در حال همگام‌سازی اطلاعات...</p>
-        </div>
-      </section>
-
-    </main>
-  </div>
-
-  <!-- ======================================================== -->
-  <!-- باکس بازشونده تقویم شمسی هوشمند (Interactive Jalali Date Picker) -->
-  <!-- ======================================================== -->
-  <div id="jalaliPickerModal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 modal-backdrop">
-    <div class="bg-white rounded-3xl w-full max-w-xs shadow-2xl border border-slate-100 p-5 space-y-4 animate-scaleUp">
-      <!-- هدر تقویم با انتخابگر ماه و سال -->
-      <div class="flex items-center justify-between pb-2 border-b border-slate-100">
-        <button type="button" onclick="jalaliPickerPrevMonth()" class="p-1.5 rounded-xl hover:bg-slate-100 text-slate-600 transition" title="ماه قبل">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+      <!-- دکمه‌های عملیاتی هدر -->
+      <div class="flex flex-wrap items-center gap-2 sm:gap-2.5">
+        <button onclick="openOrderModal()" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm shadow-md shadow-indigo-500/20 transition">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+          </svg>
+          <span>ثبت سفارش جدید</span>
         </button>
-        <div class="text-center">
-          <span id="pickerMonthName" class="font-bold text-slate-900 text-sm">مهر</span>
-          <span id="pickerYearNum" class="font-mono text-slate-600 text-sm font-bold mr-1">۱۴۰۳</span>
-        </div>
-        <button type="button" onclick="jalaliPickerNextMonth()" class="p-1.5 rounded-xl hover:bg-slate-100 text-slate-600 transition" title="ماه بعد">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+
+        <button onclick="syncFromServer()" id="btnSync" class="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-sm font-medium transition" title="بروزرسانی اطلاعات از گوگل شیت">
+          <svg id="syncIcon" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
+          </svg>
+          <span class="hidden sm:inline">همگام‌سازی</span>
         </button>
-      </div>
 
-      <!-- نام روزهای هفته -->
-      <div class="grid grid-cols-7 gap-1 text-center text-[11px] font-bold text-slate-400">
-        <div>ش</div>
-        <div>ی</div>
-        <div>د</div>
-        <div>س</div>
-        <div>چ</div>
-        <div>پ</div>
-        <div class="text-rose-500">ج</div>
-      </div>
+        <button onclick="exportCSV()" class="inline-flex items-center gap-1.5 px-3 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-sm font-medium transition" title="خروجی اکسل / CSV از فیلتر فعلی">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+          </svg>
+          <span class="hidden md:inline">خروجی CSV</span>
+        </button>
 
-      <!-- شبکه روزهای ماه -->
-      <div id="pickerDaysGrid" class="grid grid-cols-7 gap-1 text-center text-xs">
-        <!-- روزها توسط جاوا اسکریپت درج می‌شوند -->
-      </div>
+        <button onclick="openSettingsModal()" class="inline-flex items-center gap-1.5 px-3 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-sm font-medium transition" title="تنظیمات اتصال به گوگل شیت">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M10.343 3.94c.09-.542.56-.94 1.11-.94h1.093c.55 0 1.02.398 1.11.94l.149.894c.07.424.384.764.78.93.398.164.855.142 1.205-.108l.737-.527a1.125 1.125 0 011.45.12l.773.774c.39.389.44 1.002.12 1.45l-.527.737c-.25.35-.272.806-.107 1.204.165.397.505.71.93.78l.893.15c.543.09.94.56.94 1.109v1.094c0 .55-.397 1.02-.94 1.11l-.893.149c-.425.07-.765.383-.93.78-.165.398-.143.854.107 1.204l.527.738c.32.447.269 1.06-.12 1.45l-.774.773a1.125 1.125 0 01-1.449.12l-.738-.527c-.35-.25-.806-.272-1.203-.107-.397.165-.71.505-.781.929l-.149.894c-.09.542-.56.94-1.11.94h-1.094c-.55 0-1.019-.398-1.11-.94l-.148-.894c-.071-.424-.384-.764-.781-.93-.398-.164-.854-.142-1.204.108l-.738.527c-.447.32-1.06.269-1.45-.12l-.773-.774a1.125 1.125 0 01-.12-1.45l.527-.737c.25-.35.273-.806.108-1.204-.165-.397-.505-.71-.93-.78l-.894-.15c-.542-.09-.94-.56-.94-1.109v-1.094c0-.55.398-1.02.94-1.11l.894-.149c.424-.07.765-.383.93-.78.165-.398.143-.854-.107-1.204l-.527-.738a1.125 1.125 0 01.12-1.45l.773-.773a1.125 1.125 0 011.45-.12l.737.527c.35.25.807.272 1.204.107.397-.165.71-.505.78-.929l.15-.894z" />
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+          </svg>
+          <span class="hidden sm:inline">تنظیمات اتصال</span>
+        </button>
 
-      <!-- دکمه‌های پایانی -->
-      <div class="pt-2 border-t border-slate-100 flex items-center justify-between text-xs">
-        <button type="button" onclick="jalaliPickerSelectToday()" class="px-3 py-1.5 rounded-xl bg-indigo-50 text-indigo-700 hover:bg-indigo-100 font-medium transition">امروز</button>
-        <div class="flex items-center gap-1.5">
-          <button type="button" onclick="jalaliPickerClear()" class="px-2.5 py-1.5 text-slate-400 hover:text-rose-600 transition">پاک کردن</button>
-          <button type="button" onclick="closeJalaliPicker()" class="px-3 py-1.5 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 transition">بستن</button>
-        </div>
+        <button onclick="toggleTheme()" class="p-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 transition" title="تغییر تم شب/روز">
+          <svg id="iconSun" class="w-5 h-5 hidden dark:block text-amber-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v2.25m6.364.386l-1.591 1.591M21 12h-2.25m-.386 6.364l-1.591-1.591M12 18.75V21m-4.773-4.227l-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z" />
+          </svg>
+          <svg id="iconMoon" class="w-5 h-5 block dark:hidden text-slate-700" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M21.752 15.002A9.718 9.718 0 0118 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 003 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 009.002-5.998z" />
+          </svg>
+        </button>
       </div>
     </div>
-  </div>
+  </header>
 
-  <!-- ======================================================== -->
-  <!-- مودال ثبت سفارش (شامل پروژه اصلی و ثبت همزمان اتودها/ریسایزها) -->
-  <!-- ======================================================== -->
-  <div id="orderModal" class="fixed inset-0 z-50 hidden flex items-end sm:items-center justify-center p-0 sm:p-4 modal-backdrop">
-    <div class="bg-white rounded-t-3xl sm:rounded-2xl w-full max-w-3xl max-h-[92vh] overflow-y-auto shadow-2xl border border-slate-100">
-      <div class="p-4 sm:p-5 border-b border-slate-100 flex items-center justify-between sticky top-0 bg-white z-10">
-        <div>
-          <h3 id="orderModalTitle" class="text-sm sm:text-base font-bold text-slate-900">ثبت سفارش و پروژه‌های گروهی</h3>
-          <p class="text-[11px] text-slate-500">ثبت کار اصلی به همراه اتودها، ریسایزها و نسخه‌ها در یک گروه واحد</p>
+  <!-- محتوای اصلی داشبورد -->
+  <main class="max-w-[1440px] mx-auto px-4 sm:px-6 py-6 space-y-6">
+
+    <!-- بخش ۱: پنل فیلترهای پیشرفته زمانی (شمسی) و موضوعی -->
+    <section class="bg-white dark:bg-slate-900 rounded-2xl p-4 sm:p-5 border border-slate-200 dark:border-slate-800 shadow-sm">
+      <div class="flex flex-wrap items-center justify-between gap-2 pb-3 mb-4 border-b border-slate-100 dark:border-slate-800">
+        <div class="flex items-center gap-2">
+          <svg class="w-5 h-5 text-indigo-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 3c2.755 0 5.455.232 8.083.678.533.09.917.556.917 1.096v1.044a2.25 2.25 0 01-.659 1.591l-5.432 5.432a2.25 2.25 0 00-.659 1.591v2.927a2.25 2.25 0 01-1.244 2.013L9.75 21v-6.568a2.25 2.25 0 00-.659-1.591L3.659 7.409A2.25 2.25 0 013 5.818V4.774c0-.54.384-1.006.917-1.096A48.32 48.32 0 0112 3z" />
+          </svg>
+          <h2 class="text-sm sm:text-base font-bold">فیلتر هوشمند گزارشات و سفارشات (بر پایه تقویم هجری شمسی)</h2>
         </div>
-        <button onclick="closeOrderModal()" class="text-slate-400 hover:text-slate-600 p-1.5 rounded-lg hover:bg-slate-100 transition">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+        <div class="flex items-center gap-2">
+          <span id="activeFilterSummary" class="text-xs text-indigo-600 dark:text-indigo-400 font-medium">نمایش همه سفارشات</span>
+          <button onclick="resetAllFilters()" class="text-xs px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 transition">
+            پاک‌سازی فیلترها
+          </button>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-8 gap-3">
+        <!-- جستجوی زنده -->
+        <div class="xl:col-span-2">
+          <label class="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1">جستجو (عنوان، کد، توضیحات)</label>
+          <div class="relative">
+            <input type="text" id="filterSearch" oninput="applyFilters()" placeholder="مثلاً: پوستر، ORD-1001، لوگو..." class="w-full rounded-xl bg-slate-50 dark:bg-slate-800/70 border border-slate-200 dark:border-slate-700 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+          </div>
+        </div>
+
+        <!-- نوع بازه زمانی شمسی -->
+        <div>
+          <label class="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1">بازه زمانی (شمسی)</label>
+          <select id="filterTimeMode" onchange="handleTimeModeChange()" class="w-full rounded-xl bg-slate-50 dark:bg-slate-800/70 border border-slate-200 dark:border-slate-700 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            <option value="all">همه زمان‌ها</option>
+            <option value="weekly">هفتگی (۷ روز اخیر)</option>
+            <option value="monthly">ماهانه</option>
+            <option value="seasonal">فصلی (بهار تا زمستان)</option>
+            <option value="semiannual">شش‌ماهه (نیم‌سال)</option>
+            <option value="yearly">سالانه</option>
+          </select>
+        </div>
+
+        <!-- سال شمسی -->
+        <div id="yearSelectWrapper">
+          <label class="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1">سال شمسی</label>
+          <select id="filterJalaliYear" onchange="applyFilters()" class="w-full rounded-xl bg-slate-50 dark:bg-slate-800/70 border border-slate-200 dark:border-slate-700 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            <option value="all">همه سال‌ها</option>
+          </select>
+        </div>
+
+        <!-- زیربازه داینامیک (ماه / فصل / نیم‌سال) -->
+        <div id="subPeriodWrapper" class="hidden">
+          <label id="subPeriodLabel" class="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1">انتخاب دوره</label>
+          <select id="filterSubPeriod" onchange="applyFilters()" class="w-full rounded-xl bg-slate-50 dark:bg-slate-800/70 border border-slate-200 dark:border-slate-700 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"></select>
+        </div>
+
+        <!-- فیلتر سفارش‌دهنده -->
+        <div>
+          <label class="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1">سفارش‌دهنده / مشتری</label>
+          <select id="filterClient" onchange="applyFilters()" class="w-full rounded-xl bg-slate-50 dark:bg-slate-800/70 border border-slate-200 dark:border-slate-700 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            <option value="all">همه مشتریان</option>
+          </select>
+        </div>
+
+        <!-- فیلتر نوع خروجی (چاپ / دیجیتال) -->
+        <div>
+          <label class="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1">نوع خروجی</label>
+          <select id="filterCategory" onchange="applyFilters()" class="w-full rounded-xl bg-slate-50 dark:bg-slate-800/70 border border-slate-200 dark:border-slate-700 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            <option value="all">چاپ و دیجیتال</option>
+            <option value="دیجیتال">دیجیتال</option>
+            <option value="چاپ">چاپ</option>
+          </select>
+        </div>
+
+        <!-- فیلتر شماره فاکتور -->
+        <div>
+          <label class="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1">شماره فاکتور</label>
+          <select id="filterInvoice" onchange="applyFilters()" class="w-full rounded-xl bg-slate-50 dark:bg-slate-800/70 border border-slate-200 dark:border-slate-700 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            <option value="all">همه فاکتورها</option>
+          </select>
+        </div>
+
+        <!-- فیلتر وضعیت پرداخت -->
+        <div>
+          <label class="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1">وضعیت مالی</label>
+          <select id="filterPaymentStatus" onchange="applyFilters()" class="w-full rounded-xl bg-slate-50 dark:bg-slate-800/70 border border-slate-200 dark:border-slate-700 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            <option value="all">همه وضعیت‌ها</option>
+            <option value="has_debt">دارای طلب (وصول‌نشده + بیعانه)</option>
+            <option value="پرداخت شده">پرداخت شده</option>
+            <option value="طلب (پرداخت نشده)">طلب (پرداخت نشده)</option>
+            <option value="بیعانه (پرداخت بخشی)">بیعانه (پرداخت بخشی)</option>
+            <option value="رایگان">رایگان</option>
+          </select>
+        </div>
+      </div>
+    </section>
+
+    <!-- بخش ۲: کارت‌های آماری (KPI Cards) -->
+    <section class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+      <!-- کارت ۱: تعداد کل سفارشات -->
+      <div class="bg-white dark:bg-slate-900 rounded-2xl p-5 border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-between">
+        <div class="flex items-start justify-between">
+          <div>
+            <p class="text-xs font-bold text-slate-500 dark:text-slate-400">تعداد کل سفارشات</p>
+            <h3 id="kpiTotalOrders" class="text-3xl font-black text-slate-900 dark:text-white mt-2">۰</h3>
+          </div>
+          <div class="w-11 h-11 rounded-2xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+            </svg>
+          </div>
+        </div>
+        <div class="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 flex flex-wrap items-center justify-between gap-2 text-xs">
+          <span class="px-2 py-0.5 rounded-md bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 font-semibold">
+            اصلی: <strong id="kpiMainOrders">۰</strong>
+          </span>
+          <span class="px-2 py-0.5 rounded-md bg-purple-50 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300 font-semibold">
+            ری‌سایز/ویرایش: <strong id="kpiSubOrders">۰</strong>
+          </span>
+          <span class="px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-semibold">
+            رایگان: <strong id="kpiFreeOrders">۰</strong>
+          </span>
+        </div>
+      </div>
+
+      <!-- کارت ۲: مجموع درآمد وصول‌شده -->
+      <div class="bg-white dark:bg-slate-900 rounded-2xl p-5 border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-between">
+        <div class="flex items-start justify-between">
+          <div>
+            <p class="text-xs font-bold text-slate-500 dark:text-slate-400">مجموع درآمد وصول‌شده</p>
+            <div class="flex items-baseline gap-1.5 mt-2">
+              <h3 id="kpiCollectedRevenue" class="text-2xl sm:text-3xl font-black text-emerald-600 dark:text-emerald-400">۰</h3>
+              <span class="text-xs text-slate-400 font-normal">تومان</span>
+            </div>
+          </div>
+          <div class="w-11 h-11 rounded-2xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+        </div>
+        <div class="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
+          <span>ارزش کل سفارشات ثبت‌شده:</span>
+          <strong id="kpiTotalBilled" class="text-slate-800 dark:text-slate-200 font-bold">۰ تومان</strong>
+        </div>
+      </div>
+
+      <!-- کارت ۳: مجموع طلب‌ها / مطالبات وصول‌نشده -->
+      <div class="bg-white dark:bg-slate-900 rounded-2xl p-5 border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-between">
+        <div class="flex items-start justify-between">
+          <div>
+            <p class="text-xs font-bold text-slate-500 dark:text-slate-400">مجموع طلب‌ها (وصول‌نشده)</p>
+            <div class="flex items-baseline gap-1.5 mt-2">
+              <h3 id="kpiUnpaidDebt" class="text-2xl sm:text-3xl font-black text-rose-600 dark:text-rose-400">۰</h3>
+              <span class="text-xs text-slate-400 font-normal">تومان</span>
+            </div>
+          </div>
+          <div class="w-11 h-11 rounded-2xl bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 flex items-center justify-center">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+            </svg>
+          </div>
+        </div>
+        <div class="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
+          <span>سفارشات دارای مانده حساب:</span>
+          <strong id="kpiDebtCount" class="text-rose-600 dark:text-rose-400 font-bold">۰ مورد</strong>
+        </div>
+      </div>
+
+      <!-- کارت ۴: زمان صرف‌شده و میانگین درآمد ساعتی -->
+      <div class="bg-white dark:bg-slate-900 rounded-2xl p-5 border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-between">
+        <div class="flex items-start justify-between">
+          <div>
+            <p class="text-xs font-bold text-slate-500 dark:text-slate-400">مجموع زمان طراحی و بهره‌وری</p>
+            <h3 id="kpiTotalDuration" class="text-2xl sm:text-3xl font-black text-amber-600 dark:text-amber-400 mt-2">۰ ساعت</h3>
+          </div>
+          <div class="w-11 h-11 rounded-2xl bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 flex items-center justify-center">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+        </div>
+        <div class="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
+          <span>میانگین درآمد هر ساعت کار:</span>
+          <strong id="kpiHourlyRate" class="text-amber-600 dark:text-amber-400 font-bold">۰ تومان/ساعت</strong>
+        </div>
+      </div>
+    </section>
+
+    <!-- بخش ۳: نمودارهای تحلیلی Chart.js -->
+    <section class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      <!-- نمودار ۱: روند درآمد و طلب در طول زمان -->
+      <div class="lg:col-span-2 bg-white dark:bg-slate-900 rounded-2xl p-5 border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col">
+        <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
+          <div>
+            <h3 class="text-sm sm:text-base font-bold text-slate-900 dark:text-white">روند درآمد وصول‌شده و مطالبات در طول زمان</h3>
+            <p class="text-xs text-slate-500 dark:text-slate-400">تفکیک خودکار بر اساس بازه زمانی شمسی انتخاب‌شده</p>
+          </div>
+          <select id="trendGroupingMode" onchange="renderAllCharts()" class="text-xs rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-2.5 py-1.5">
+            <option value="auto">گروه‌بندی خودکار زمانی</option>
+            <option value="month">بر اساس ماه‌های شمسی</option>
+            <option value="season">بر اساس فصل‌ها</option>
+            <option value="year">بر اساس سال</option>
+          </select>
+        </div>
+        <div class="relative flex-1 min-h-[270px]">
+          <canvas id="chartTrend"></canvas>
+        </div>
+      </div>
+
+      <!-- نمودار ۲: دایره‌ای سهم چاپ در برابر دیجیتال -->
+      <div class="bg-white dark:bg-slate-900 rounded-2xl p-5 border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col">
+        <div class="flex items-center justify-between gap-2 mb-4">
+          <div>
+            <h3 class="text-sm sm:text-base font-bold text-slate-900 dark:text-white">سهم «چاپ» در برابر «دیجیتال»</h3>
+            <p id="categoryChartSubtitle" class="text-xs text-slate-500 dark:text-slate-400">مقایسه بر اساس میزان درآمد و تعداد</p>
+          </div>
+          <div class="inline-flex rounded-lg bg-slate-100 dark:bg-slate-800 p-0.5 text-xs">
+            <button id="btnCatRevenue" onclick="setCategoryMetric('revenue')" class="px-2.5 py-1 rounded-md bg-white dark:bg-slate-700 shadow-sm font-semibold transition">درآمد</button>
+            <button id="btnCatCount" onclick="setCategoryMetric('count')" class="px-2.5 py-1 rounded-md text-slate-500 dark:text-slate-400 transition">تعداد</button>
+          </div>
+        </div>
+        <div class="relative flex-1 min-h-[220px] flex items-center justify-center">
+          <canvas id="chartCategory"></canvas>
+        </div>
+        <div id="categorySummaryStats" class="mt-3 pt-3 border-t border-slate-100 dark:border-slate-800 grid grid-cols-2 gap-2 text-xs text-center"></div>
+      </div>
+
+      <!-- نمودار ۳: برترین سفارش‌دهنده‌ها (بیشترین درآمدزایی و بیشترین بدهی) -->
+      <div class="lg:col-span-3 bg-white dark:bg-slate-900 rounded-2xl p-5 border border-slate-200 dark:border-slate-800 shadow-sm">
+        <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
+          <div>
+            <h3 class="text-sm sm:text-base font-bold text-slate-900 dark:text-white">تحلیل مقایسه‌ای برترین سفارش‌دهنده‌ها (مشتریان)</h3>
+            <p class="text-xs text-slate-500 dark:text-slate-400">مقایسه همزمان درآمد وصول‌شده (سبز) و بدهی/طلب باقی‌مانده (قرمز) به تفکیک هر سفارش‌دهنده</p>
+          </div>
+        </div>
+        <div class="relative h-[280px]">
+          <canvas id="chartClients"></canvas>
+        </div>
+      </div>
+    </section>
+
+    <!-- بخش ۴: جدول پیشرفته نمایش و مدیریت سفارشات -->
+    <section class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
+      <!-- هدر جدول -->
+      <div class="p-4 sm:p-5 border-b border-slate-200 dark:border-slate-800 flex flex-wrap items-center justify-between gap-3">
+        <div class="flex items-center gap-3">
+          <h2 class="text-base sm:text-lg font-extrabold text-slate-900 dark:text-white">لیست سفارشات و تسک‌ها</h2>
+          <span id="tableCountBadge" class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-indigo-50 text-indigo-600 dark:bg-indigo-950/80 dark:text-indigo-300">۰ سفارش</span>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-3">
+          <!-- سوئیچ نمایش درختی / خطی -->
+          <label class="inline-flex items-center gap-2 text-xs font-semibold text-slate-600 dark:text-slate-300 cursor-pointer select-none bg-slate-100 dark:bg-slate-800 px-3 py-2 rounded-xl">
+            <input type="checkbox" id="toggleTreeView" checked onchange="renderOrdersTable()" class="rounded text-indigo-600 focus:ring-indigo-500" />
+            <span>نمایش درختی (ری‌سایز و اصلاحیه زیرمجموعه سفارش مادر)</span>
+          </label>
+
+          <!-- تعداد در صفحه -->
+          <div class="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400">
+            <span>نمایش:</span>
+            <select id="pageSizeSelect" onchange="changePageSize()" class="rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-2 py-1.5 font-semibold text-slate-700 dark:text-slate-200">
+              <option value="15">۱۵ ردیف</option>
+              <option value="30">۳۰ ردیف</option>
+              <option value="50">۵۰ ردیف</option>
+              <option value="9999">همه</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- جدول اسکرول‌پذیر -->
+      <div class="overflow-x-auto">
+        <table class="w-full text-right border-collapse">
+          <thead>
+            <tr class="bg-slate-50/80 dark:bg-slate-800/60 text-slate-500 dark:text-slate-400 text-xs font-bold border-b border-slate-200 dark:border-slate-800">
+              <th class="py-3.5 px-4 whitespace-nowrap">شناسه / ساختار</th>
+              <th class="py-3.5 px-4 min-w-[220px]">عنوان سفارش و نوع تسک</th>
+              <th class="py-3.5 px-3 whitespace-nowrap">سفارش‌دهنده / فاکتور</th>
+              <th class="py-3.5 px-3 whitespace-nowrap">خروجی و ابعاد</th>
+              <th class="py-3.5 px-3 whitespace-nowrap">ثبت / تحویل (شمسی)</th>
+              <th class="py-3.5 px-3 whitespace-nowrap">زمان</th>
+              <th class="py-3.5 px-3 whitespace-nowrap">مبلغ کل (تومان)</th>
+              <th class="py-3.5 px-3 whitespace-nowrap">وضعیت مالی (تغییر سریع)</th>
+              <th class="py-3.5 px-3 whitespace-nowrap">دریافتی / مانده طلب</th>
+              <th class="py-3.5 px-4 text-center whitespace-nowrap">عملیات</th>
+            </tr>
+          </thead>
+          <tbody id="ordersTableBody" class="divide-y divide-slate-200/70 dark:divide-slate-800 text-sm">
+            <!-- ردیف‌ها با جاوااسکریپت ساخته می‌شوند -->
+          </tbody>
+        </table>
+      </div>
+
+      <!-- صفحه‌بندی (Pagination) -->
+      <div class="px-4 sm:px-5 py-3.5 bg-slate-50/50 dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 flex flex-wrap items-center justify-between gap-3 text-xs text-slate-600 dark:text-slate-400">
+        <div id="paginationInfo">نمایش ۰ تا ۰ از ۰ مورد</div>
+        <div class="flex items-center gap-1.5" id="paginationControls"></div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- مودال ۱: ثبت و ویرایش سفارش (CRUD Modal) -->
+  <div id="orderModal" class="fixed inset-0 z-50 hidden bg-slate-950/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-5 overflow-y-auto">
+    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl max-w-3xl w-full shadow-2xl overflow-hidden my-auto">
+      <!-- هدر مودال -->
+      <div class="px-5 py-4 bg-slate-50 dark:bg-slate-800/60 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
+        <div class="flex items-center gap-2.5">
+          <span class="w-3 h-3 rounded-full bg-indigo-500"></span>
+          <h3 id="orderModalTitle" class="text-base sm:text-lg font-extrabold text-slate-900 dark:text-white">ثبت سفارش جدید</h3>
+        </div>
+        <button onclick="closeOrderModal()" class="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-200/50 dark:hover:bg-slate-700/50">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
           </svg>
         </button>
       </div>
 
-      <form id="orderForm" onsubmit="handleOrderFormSubmit(event)" class="p-4 sm:p-5 space-y-4 text-xs">
-        <input type="hidden" id="formOrderId">
+      <!-- فرم سفارش -->
+      <form id="orderForm" onsubmit="handleOrderSubmit(event)" class="p-5 space-y-4 max-h-[82vh] overflow-y-auto">
+        <input type="hidden" id="formOrderId" />
 
-        <!-- بخش الف: پروژه اصلی -->
-        <div class="p-3.5 bg-slate-50/70 rounded-2xl border border-slate-200/80 space-y-3">
-          <div class="flex items-center justify-between">
-            <span class="font-bold text-slate-900 text-xs sm:text-sm">۱. مشخصات پروژه اصلی</span>
-            <span class="text-[11px] text-indigo-600 font-semibold bg-indigo-50 px-2 py-0.5 rounded-lg">کار پایه</span>
+        <!-- ردیف اول: نوع تسک، سفارش مادر، شماره فاکتور -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 bg-indigo-50/50 dark:bg-indigo-950/20 p-3.5 rounded-xl border border-indigo-100 dark:border-indigo-900/40">
+          <div>
+            <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">نوع تسک / سفارش *</label>
+            <select id="formOrderType" required onchange="handleOrderTypeChange()" class="w-full rounded-xl bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500">
+              <option value="سفارش جدید">سفارش جدید (اصلی)</option>
+              <option value="ری‌سایز">ری‌سایز (Resize)</option>
+              <option value="اصلاحیه/ویرایش">اصلاحیه / ویرایش</option>
+              <option value="نسخه جایگزین">نسخه جایگزین</option>
+            </select>
           </div>
 
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div>
-              <label class="block font-medium text-slate-700 mb-1">عنوان سفارش اصلی *</label>
-              <input type="text" id="formTitle" required placeholder="مثال: طراحی پوستر دوره آموزشی نجوم" class="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500">
+          <div class="sm:col-span-2">
+            <div class="flex items-center justify-between mb-1">
+              <label class="block text-xs font-bold text-slate-700 dark:text-slate-300">لینک به سفارش مادر (برای ری‌سایز، اصلاحیه یا نسخه دیگر)</label>
+              <button type="button" onclick="copyFromParentOrder()" id="btnCopyParent" class="hidden text-[11px] text-indigo-600 dark:text-indigo-400 hover:underline font-semibold">
+                کپی مشتری و فاکتور از سفارش مادر
+              </button>
             </div>
-            <div>
-              <label class="block font-medium text-slate-700 mb-1">سفارش‌دهنده / کارفرما *</label>
-              <input type="text" id="formClientName" required placeholder="مثال: آکادمی فضایی، دکتر نجفی..." class="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500">
-            </div>
-          </div>
-
-          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <div>
-              <label class="block font-medium text-slate-700 mb-1">نوع رسانه *</label>
-              <select id="formType" class="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500">
-                <option value="Digital">دیجیتال</option>
-                <option value="Print">چاپ</option>
-                <option value="Both">هر دو</option>
-              </select>
-            </div>
-            <div>
-              <label class="block font-medium text-slate-700 mb-1">قالب پروژه</label>
-              <input type="text" id="formFormatType" placeholder="مثال: پوستر، دیوارنگاره، لایت‌باکس..." class="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500">
-            </div>
-            <div>
-              <label class="block font-medium text-slate-700 mb-1">وضعیت سفارش اصلی *</label>
-              <select id="formStatus" class="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 font-semibold">
-                <option value="In Progress">در حال انجام</option>
-                <option value="Delivered">تحویل داده شده</option>
-                <option value="Canceled">لغو شده (کنسلی کارفرما)</option>
-              </select>
-            </div>
-          </div>
-
-          <!-- تاریخ‌ها با دکمه باز شدن تقویم شمسی -->
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div>
-              <label class="block font-medium text-slate-700 mb-1">تاریخ دریافت سفارش (شمسی) *</label>
-              <div class="relative">
-                <input type="text" id="formDateOrdered" readonly required onclick="openJalaliPicker('formDateOrdered')" placeholder="انتخاب از تقویم" class="w-full px-3 py-2 pl-9 rounded-xl border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 font-mono cursor-pointer">
-                <button type="button" onclick="openJalaliPicker('formDateOrdered')" class="absolute left-2.5 top-2.5 text-indigo-600 hover:text-indigo-800 transition" title="باز کردن تقویم">
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-                </button>
-              </div>
-            </div>
-            <div>
-              <label class="block font-medium text-slate-700 mb-1">تاریخ تحویل داده شده (شمسی)</label>
-              <div class="relative">
-                <input type="text" id="formDateDelivered" readonly onclick="openJalaliPicker('formDateDelivered')" placeholder="انتخاب از تقویم (اختیاری)" class="w-full px-3 py-2 pl-9 rounded-xl border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 font-mono cursor-pointer">
-                <button type="button" onclick="openJalaliPicker('formDateDelivered')" class="absolute left-2.5 top-2.5 text-indigo-600 hover:text-indigo-800 transition" title="باز کردن تقویم">
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-                </button>
-              </div>
-            </div>
+            <select id="formParentId" onchange="handleParentSelectChange()" class="w-full rounded-xl bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500">
+              <option value="">— بدون سفارش مادر (این یک سفارش اصلی است) —</option>
+            </select>
           </div>
         </div>
 
-        <!-- بخش ب: افزودن اتودها، ریسایزها و نسخه‌های فرعی در همین فرم -->
-        <div id="subOrdersContainerWrapper" class="p-3.5 bg-slate-50/70 rounded-2xl border border-slate-200/80 space-y-3">
-          <div class="flex items-center justify-between">
-            <div>
-              <span class="font-bold text-slate-900 text-xs sm:text-sm">۲. نسخه‌های مرتبط، اتودها و ریسایزها</span>
-              <p class="text-[11px] text-slate-500">اگر چند پوستر رد شده یا چند ریسایز زده‌اید، در همینجا جداگانه بیافزایید تا در یک گروه قرار گیرند.</p>
+        <!-- ردیف دوم: عنوان، سفارش‌دهنده، فاکتور -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div class="sm:col-span-1">
+            <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">عنوان و موضوع سفارش *</label>
+            <input type="text" id="formTitle" required placeholder="مثلاً: طراحی پوستر جشنواره پاییزه" class="w-full rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500" />
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">نام سفارش‌دهنده / مجموعه *</label>
+            <input type="text" id="formClient" list="clientDatalist" required placeholder="نام مشتری یا کانال ورودی" class="w-full rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500" />
+            <datalist id="clientDatalist"></datalist>
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">شماره یا عنوان فاکتور</label>
+            <input type="text" id="formInvoiceId" list="invoiceDatalist" placeholder="مثلاً: INV-1405-01" class="w-full rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500" />
+            <datalist id="invoiceDatalist"></datalist>
+          </div>
+        </div>
+
+        <!-- ردیف سوم: دسته‌بندی، ابعاد، تاریخ ثبت، تاریخ تحویل -->
+        <div class="grid grid-cols-1 sm:grid-cols-4 gap-4">
+          <div>
+            <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">نوع خروجی *</label>
+            <select id="formCategory" required class="w-full rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500">
+              <option value="دیجیتال">دیجیتال (وب / سوشال)</option>
+              <option value="چاپ">چاپ (افست / دیجیتال / لارج‌فرمت)</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">ابعاد طراحی</label>
+            <input type="text" id="formDimensions" list="dimensionsDatalist" placeholder="مثلاً: 1080x1350 پیکسل" class="w-full rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500" />
+            <datalist id="dimensionsDatalist">
+              <option value="1080x1350 پیکسل (پست اینستاگرام)" />
+              <option value="1080x1920 پیکسل (استوری)" />
+              <option value="50x70 سانتی‌متر (پوستر)" />
+              <option value="21x29.7 سانتی‌متر (A4)" />
+              <option value="14.8x21 سانتی‌متر (A5)" />
+              <option value="9x6 سانتی‌متر (کارت ویزیت)" />
+              <option value="300x100 سانتی‌متر (بنر)" />
+            </datalist>
+          </div>
+
+          <div>
+            <div class="flex items-center justify-between mb-1">
+              <label class="text-xs font-bold text-slate-700 dark:text-slate-300">تاریخ ثبت (شمسی) *</label>
+              <button type="button" onclick="setTodayInInput('formOrderDate')" class="text-[11px] text-indigo-600 dark:text-indigo-400 hover:underline">امروز</button>
             </div>
-            <button type="button" onclick="addSubOrderItem()" class="inline-flex items-center gap-1 bg-white hover:bg-slate-100 text-indigo-600 border border-indigo-200 px-3 py-1.5 rounded-xl font-bold text-xs transition shadow-sm">
-              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
-              <span>+ افزودن نسخه / اتود / ریسایز</span>
+            <input type="text" id="formOrderDate" required placeholder="1405/07/22" dir="ltr" class="w-full text-center font-mono rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500" />
+          </div>
+
+          <div>
+            <div class="flex items-center justify-between mb-1">
+              <label class="text-xs font-bold text-slate-700 dark:text-slate-300">تاریخ تحویل (شمسی)</label>
+              <button type="button" onclick="setTodayInInput('formDeliveryDate')" class="text-[11px] text-indigo-600 dark:text-indigo-400 hover:underline">امروز</button>
+            </div>
+            <input type="text" id="formDeliveryDate" placeholder="1405/07/24" dir="ltr" class="w-full text-center font-mono rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500" />
+          </div>
+        </div>
+
+        <!-- ردیف چهارم: زمان صرف‌شده، قیمت کل، وضعیت پرداخت، مبلغ دریافتی -->
+        <div class="grid grid-cols-1 sm:grid-cols-4 gap-4 p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/70">
+          <!-- زمان صرف شده (ساعت و دقیقه) -->
+          <div>
+            <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">زمان صرف‌شده (ساعت : دقیقه)</label>
+            <div class="grid grid-cols-2 gap-1.5">
+              <div>
+                <input type="number" id="formDurationHoursPart" min="0" step="1" placeholder="ساعت" oninput="updateDecimalDuration()" class="w-full rounded-xl bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 px-2.5 py-2 text-sm text-center" />
+              </div>
+              <div>
+                <input type="number" id="formDurationMinutesPart" min="0" max="59" step="5" placeholder="دقیقه" oninput="updateDecimalDuration()" class="w-full rounded-xl bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 px-2.5 py-2 text-sm text-center" />
+              </div>
+            </div>
+            <input type="hidden" id="formDurationHours" value="0" />
+            <p id="durationPreviewText" class="text-[11px] text-slate-400 mt-1">معادل: ۰ ساعت</p>
+          </div>
+
+          <!-- مبلغ کل سفارش -->
+          <div>
+            <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">مبلغ کل سفارش (تومان) *</label>
+            <input type="number" id="formPrice" min="0" step="1000" required oninput="syncPaymentFields()" placeholder="مثلاً: 1500000" class="w-full rounded-xl bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 px-3 py-2 text-sm font-bold focus:ring-2 focus:ring-indigo-500" />
+            <p id="priceFormattedPreview" class="text-[11px] text-slate-500 mt-1">۰ تومان</p>
+          </div>
+
+          <!-- وضعیت مالی -->
+          <div>
+            <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">وضعیت مالی *</label>
+            <select id="formPaymentStatus" onchange="syncPaymentFields(true)" class="w-full rounded-xl bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 px-3 py-2 text-sm font-semibold focus:ring-2 focus:ring-indigo-500">
+              <option value="طلب (پرداخت نشده)">طلب (پرداخت نشده)</option>
+              <option value="پرداخت شده">پرداخت شده (تسویه کامل)</option>
+              <option value="بیعانه (پرداخت بخشی)">بیعانه (پرداخت بخشی)</option>
+              <option value="رایگان">رایگان</option>
+            </select>
+          </div>
+
+          <!-- مبلغ دریافت شده -->
+          <div>
+            <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">مبلغ دریافت‌شده (تومان)</label>
+            <input type="number" id="formPaidAmount" min="0" step="1000" oninput="updateRemainingPreview()" placeholder="0" class="w-full rounded-xl bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 px-3 py-2 text-sm font-bold focus:ring-2 focus:ring-indigo-500" />
+            <p id="remainingDebtPreview" class="text-[11px] font-semibold text-rose-500 mt-1">مانده طلب: ۰ تومان</p>
+          </div>
+        </div>
+
+        <!-- ردیف پنجم: لینک گوگل درایو و توضیحات -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">لینک فایل پروژه در Google Drive</label>
+            <input type="url" id="formDriveLink" dir="ltr" placeholder="https://drive.google.com/..." class="w-full rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500" />
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">توضیحات تکمیلی</label>
+            <input type="text" id="formNotes" placeholder="نکات چاپ، کد رنگ، اصلاحات خواسته شده..." class="w-full rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500" />
+          </div>
+        </div>
+
+        <!-- فوتر فرم -->
+        <div class="pt-4 border-t border-slate-200 dark:border-slate-800 flex items-center justify-end gap-2.5">
+          <button type="button" onclick="closeOrderModal()" class="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-sm font-semibold">
+            انصراف
+          </button>
+          <button type="submit" id="btnSubmitOrder" class="px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold shadow-md shadow-indigo-500/20">
+            ذخیره سفارش
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- مودال ۲: تنظیمات اتصال به Google Apps Script -->
+  <div id="settingsModal" class="fixed inset-0 z-50 hidden bg-slate-950/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
+    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl max-w-lg w-full shadow-2xl overflow-hidden">
+      <div class="px-5 py-4 bg-slate-50 dark:bg-slate-800/60 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
+        <h3 class="text-base font-extrabold text-slate-900 dark:text-white">تنظیمات اتصال به دیتابیس (Google Sheets)</h3>
+        <button onclick="closeSettingsModal()" class="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+
+      <div class="p-5 space-y-4">
+        <div class="p-3.5 rounded-xl bg-indigo-50/70 dark:bg-indigo-950/40 border border-indigo-200/60 dark:border-indigo-800/50 text-xs leading-relaxed text-slate-700 dark:text-slate-300">
+          آدرس <strong>Web App URL</strong> دریافتی از Google Apps Script و کلید امنیتی (پیش‌فرض: <code class="font-mono font-bold text-indigo-600 dark:text-indigo-400">GD-SECRET-2026</code>) را وارد کنید. این اطلاعات تنها در مرورگر شما (<code class="font-mono">localStorage</code>) ذخیره می‌شوند.
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">آدرس وب‌اپ گوگل اسکریپت (Web App URL)</label>
+          <input type="url" id="settingScriptUrl" dir="ltr" placeholder="https://script.google.com/macros/s/.../exec" class="w-full rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 px-3 py-2.5 text-xs font-mono focus:ring-2 focus:ring-indigo-500" />
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">کلید امنیتی (API Key)</label>
+          <input type="password" id="settingApiKey" dir="ltr" placeholder="GD-SECRET-2026" class="w-full rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 px-3 py-2.5 text-sm font-mono focus:ring-2 focus:ring-indigo-500" />
+        </div>
+
+        <div class="pt-2 flex flex-wrap items-center justify-between gap-2">
+          <button type="button" onclick="loadSampleDemoData()" class="text-xs px-3 py-2 rounded-xl bg-amber-100 hover:bg-amber-200 text-amber-900 dark:bg-amber-900/40 dark:text-amber-300 font-semibold transition">
+            بارگذاری داده‌های نمونه آزمایشی
+          </button>
+
+          <div class="flex items-center gap-2">
+            <button type="button" onclick="testConnection()" id="btnTestConn" class="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-xs font-bold">
+              تست اتصال
+            </button>
+            <button type="button" onclick="saveSettings()" class="px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shadow-md shadow-indigo-500/20">
+              ذخیره و همگام‌سازی
             </button>
           </div>
-
-          <div id="subOrdersList" class="space-y-2">
-            <!-- ردیف‌های پویای نسخه‌ها در اینجا افزوده می‌شوند -->
-          </div>
-        </div>
-
-        <!-- بخش ج: امور مالی (با جداسازی خودکار سه رقم سه رقم) -->
-        <div class="p-3.5 sm:p-4 bg-slate-50 rounded-2xl border border-slate-200/80 space-y-3">
-          <div class="flex flex-wrap items-center justify-between gap-2">
-            <span class="font-bold text-slate-800 text-xs sm:text-sm">۳. امور مالی پروژه و فاکتور</span>
-            <label class="inline-flex items-center cursor-pointer gap-2 bg-purple-50 hover:bg-purple-100 text-purple-800 px-3 py-1.5 rounded-xl border border-purple-200 transition">
-              <input type="checkbox" id="formIsFree" onchange="toggleFreeOrder(this.checked)" class="rounded text-purple-600 focus:ring-purple-500">
-              <span class="font-bold text-xs">این کار دوستانه / رایگان است (بدون دریافت هزینه)</span>
-            </label>
-          </div>
-
-          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <div>
-              <label class="block font-medium text-slate-600 mb-1">
-                <span id="labelTotalFee">مبلغ / ارزش کل کار (تومان) *</span>
-              </label>
-              <!-- اینپوت با قابلیت جداسازی سه رقم سه رقم به صورت زنده -->
-              <input type="text" id="formTotalFeeFormatted" oninput="formatCurrencyInput(this, 'formTotalFee')" placeholder="مثال: ۵,۰۰۰,۰۰۰" class="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 font-mono font-semibold">
-              <input type="hidden" id="formTotalFee" value="0">
-              <p class="text-[10px] text-slate-400 mt-0.5" id="hintTotalFee">ارزش ریالی کار با جداسازی خودکار ۳ رقم</p>
-            </div>
-
-            <div>
-              <label class="block font-medium text-slate-600 mb-1">مبلغ دریافت شده (تومان)</label>
-              <input type="text" id="formAmountPaidFormatted" oninput="formatCurrencyInput(this, 'formAmountPaid')" placeholder="۰" class="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 font-mono">
-              <input type="hidden" id="formAmountPaid" value="0">
-              <p class="text-[10px] text-slate-400 mt-0.5" id="hintAmountPaid">مبلغ واریز شده تا این لحظه</p>
-            </div>
-
-            <div>
-              <label class="block font-medium text-slate-600 mb-1">شماره یا عنوان فاکتور</label>
-              <input type="text" id="formInvoiceId" placeholder="مثال: فاکتور ۱۴۰۳-۰۱" class="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500">
-            </div>
-          </div>
-        </div>
-
-        <!-- بخش د: پیوند فایل درایو و والد مستقل (در صورت ویرایش) -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <div>
-            <label class="block font-medium text-slate-700 mb-1">لینک فایل‌ها در Google Drive</label>
-            <input type="url" id="formFilesLink" placeholder="https://drive.google.com/..." class="w-full px-3 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500">
-          </div>
-          <div>
-            <label class="block font-medium text-slate-700 mb-1">پیوند به سفارش والد موجود (اختیاری)</label>
-            <select id="formParentOrderId" class="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500">
-              <option value="">(پروژه مستقل / بدون والد)</option>
-            </select>
-          </div>
-        </div>
-
-        <!-- دکمه‌های فرم -->
-        <div class="pt-3 border-t border-slate-100 flex items-center justify-end gap-2">
-          <button type="button" onclick="closeOrderModal()" class="px-4 py-2 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 font-medium transition">انصراف</button>
-          <button type="submit" id="submitOrderBtn" class="px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-medium shadow-sm transition">ذخیره سفارش</button>
-        </div>
-      </form>
-    </div>
-  </div>
-
-  <!-- ======================================================== -->
-  <!-- مودال تنظیمات و تغییر رمز عبور امن دیتابیس (Settings Modal) -->
-  <!-- ======================================================== -->
-  <div id="settingsModal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 modal-backdrop">
-    <div class="bg-white rounded-3xl w-full max-w-lg shadow-2xl border border-slate-100 p-5 sm:p-6 space-y-4">
-      <div class="flex items-center justify-between pb-3 border-b border-slate-100">
-        <h3 class="text-sm sm:text-base font-bold text-slate-900">تنظیمات سیستم و امنیت سرور</h3>
-        <button onclick="closeSettingsModal()" class="text-slate-400 hover:text-slate-600 p-1.5 rounded-lg hover:bg-slate-100 transition">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-          </svg>
-        </button>
-      </div>
-
-      <div class="space-y-4 text-xs">
-        <!-- تغییر رمز عبور در دیتابیس سرور -->
-        <form onsubmit="handlePasswordChangeSubmit(event)" class="p-3.5 bg-slate-50 rounded-2xl border border-slate-200 space-y-2">
-          <span class="font-bold text-slate-800 block">تغییر رمز عبور در دیتابیس سرور</span>
-          <p class="text-[11px] text-slate-500">رمز عبور با الگوریتم SHA-256 در سرور ذخیره می‌شود و هیچ کاربری قادر به مشاهده آن در کلاینت نخواهد بود.</p>
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
-            <input type="password" id="currentPassInput" required placeholder="رمز عبور فعلی" class="px-3 py-2 rounded-xl border border-slate-200 bg-white font-mono">
-            <input type="password" id="newPassInput" required placeholder="رمز عبور جدید" class="px-3 py-2 rounded-xl border border-slate-200 bg-white font-mono">
-          </div>
-          <div class="flex justify-end pt-1">
-            <button type="submit" id="changePassBtn" class="px-4 py-2 bg-slate-800 hover:bg-slate-900 text-white rounded-xl transition font-medium">ذخیره رمز جدید در سرور</button>
-          </div>
-          <span id="passcodeUpdateMsg" class="text-[10px] text-emerald-600 font-semibold hidden"></span>
-        </form>
-
-        <!-- آدرس Google Apps Script Web App -->
-        <div>
-          <label class="block font-medium text-slate-700 mb-1">آدرس وب‌اپ گوگل (Web App URL)</label>
-          <input type="url" id="gasUrlInput" placeholder="https://script.google.com/macros/s/.../exec" class="w-full px-3 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 font-mono">
-        </div>
-
-        <div class="p-3 bg-amber-50 rounded-xl border border-amber-200 text-amber-800 text-[11px] space-y-1">
-          <p class="font-semibold">نکات مهم امنیتی:</p>
-          <p>رمز عبور داخل شیت تنظیمات یا Properties سرور به صورت رمزنگاری‌شده نگهداری می‌شود و از طریق inspect یا سورس‌کد فرانت‌اند افشا نمی‌شود.</p>
-        </div>
-      </div>
-
-      <div class="pt-3 border-t border-slate-100 flex items-center justify-between">
-        <button onclick="clearGasUrl()" class="text-xs text-rose-600 hover:underline">حالت آفلاین (دمو)</button>
-        <div class="flex items-center gap-2">
-          <button onclick="closeSettingsModal()" class="px-4 py-2 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 text-xs font-medium transition">بستن</button>
-          <button onclick="saveGasUrl()" class="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-medium shadow-sm transition">ذخیره و اتصال</button>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- اسکریپت اصلی پنل -->
-  <script src="app.js"></script>
+  <!-- منطق کامل جاوااسکریپت -->
+  <script>
+    /********************************************************************
+     * ۱. موتور کامل تقویم هجری شمسی (جلالی) و ابزارهای فرمت‌دهی فارسی
+     ********************************************************************/
+    const JALALI_MONTH_NAMES = [
+      'فروردین', 'اردیبهشت', 'خرداد',
+      'تیر', 'مرداد', 'شهریور',
+      'مهر', 'آبان', 'آذر',
+      'دی', 'بهمن', 'اسفند'
+    ];
+
+    // تبدیل ارقام فارسی و عربی به انگلیسی
+    function toEnglishDigits(str) {
+      if (str === null || str === undefined) return '';
+      return String(str)
+        .replace(/[۰-۹]/g, d => '۰۱۲۳۴۵۶۷۸۹'.indexOf(d))
+        .replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d));
+    }
+
+    // فرمت عدد به فارسی با جداکننده هزارگان
+    function formatNumberFA(num) {
+      const n = Number(num) || 0;
+      return n.toLocaleString('fa-IR');
+    }
+
+    // تبدیل تاریخ میلادی به شمسی (الگوریتم دقیق ریاضی)
+    function gregorianToJalali(gy, gm, gd) {
+      const g_d_m = [0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334];
+      let gy2 = (gm > 2) ? (gy + 1) : gy;
+      let days = 355666 + (365 * gy) + Math.floor((gy2 + 3) / 4) - Math.floor((gy2 + 99) / 100) + Math.floor((gy2 + 399) / 400) + gd + g_d_m[gm - 1];
+      let jy = -1595 + (33 * Math.floor(days / 12053));
+      days %= 12053;
+      jy += 4 * Math.floor(days / 1461);
+      days %= 1461;
+      if (days > 365) {
+        jy += Math.floor((days - 1) / 365);
+        days = (days - 1) % 365;
+      }
+      let jm = (days < 186) ? 1 + Math.floor(days / 31) : 7 + Math.floor((days - 186) / 30);
+      let jd = 1 + ((days < 186) ? (days % 31) : ((days - 186) % 30));
+      return [jy, jm, jd];
+    }
+
+    // تبدیل تاریخ شمسی به میلادی (برای محاسبه دقیق فاصله روزها در فیلتر هفتگی)
+    function jalaliToGregorian(jy, jm, jd) {
+      jy += 1595;
+      let days = -355668 + (365 * jy) + (Math.floor(jy / 33) * 8) + Math.floor(((jy % 33) + 3) / 4) + jd + ((jm < 7) ? (jm - 1) * 31 : ((jm - 7) * 30) + 186);
+      let gy = 400 * Math.floor(days / 146097);
+      days %= 146097;
+      if (days > 36524) {
+        gy += 100 * Math.floor(--days / 36524);
+        days %= 36524;
+        if (days >= 365) days++;
+      }
+      gy += 4 * Math.floor(days / 1461);
+      days %= 1461;
+      if (days > 365) {
+        gy += Math.floor((days - 1) / 365);
+        days = (days - 1) % 365;
+      }
+      let gd = days + 1;
+      const sal_a = [0, 31, ((gy % 4 === 0 && gy % 100 !== 0) || (gy % 400 === 0)) ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+      let gm;
+      for (gm = 0; gm < 13 && gd > sal_a[gm]; gm++) gd -= sal_a[gm];
+      return [gy, gm, gd];
+    }
+
+    // دریافت تاریخ امروز شمسی به صورت رشته YYYY/MM/DD و آبجکت
+    function getTodayJalali() {
+      const now = new Date();
+      const [jy, jm, jd] = gregorianToJalali(now.getFullYear(), now.getMonth() + 1, now.getDate());
+      const formatted = `${jy}/${String(jm).padStart(2, '0')}/${String(jd).padStart(2, '0')}`;
+      return { year: jy, month: jm, day: jd, formatted };
+    }
+
+    // پارس کردن رشته تاریخ شمسی (مثلاً "1405/07/22")
+    function parseJalaliString(dateStr) {
+      if (!dateStr) return null;
+      const clean = toEnglishDigits(String(dateStr).trim()).replace(/[-.]/g, '/');
+      const parts = clean.split('/');
+      if (parts.length !== 3) return null;
+      const y = parseInt(parts[0], 10);
+      const m = parseInt(parts[1], 10);
+      const d = parseInt(parts[2], 10);
+      if (isNaN(y) || isNaN(m) || isNaN(d) || m < 1 || m > 12 || d < 1 || d > 31) return null;
+      const [gy, gm, gd] = jalaliToGregorian(y, m, d);
+      const timestamp = new Date(gy, gm - 1, gd).getTime();
+      const season = Math.ceil(m / 3); // 1: بهار, 2: تابستان, 3: پاییز, 4: زمستان
+      const halfYear = m <= 6 ? 1 : 2;
+      return {
+        year: y,
+        month: m,
+        day: d,
+        season,
+        halfYear,
+        timestamp,
+        normalized: `${y}/${String(m).padStart(2, '0')}/${String(d).padStart(2, '0')}`
+      };
+    }
+
+    // تبدیل ساعت اعشاری به نمایش فارسی (مثلاً 2.5 -> ۲ ساعت و ۳۰ دقیقه)
+    function formatDurationFA(decimalHours) {
+      const num = Number(decimalHours) || 0;
+      if (num <= 0) return '۰ ساعت';
+      const totalMinutes = Math.round(num * 60);
+      const h = Math.floor(totalMinutes / 60);
+      const m = totalMinutes % 60;
+      if (h > 0 && m > 0) return `${formatNumberFA(h)} ساعت و ${formatNumberFA(m)} دقیقه`;
+      if (h > 0) return `${formatNumberFA(h)} ساعت`;
+      return `${formatNumberFA(m)} دقیقه`;
+    }
+
+    /********************************************************************
+     * ۲. وضعیت مرکزی اپلیکیشن (State Management)
+     ********************************************************************/
+    const STORAGE_KEYS = {
+      SCRIPT_URL: 'gd_oms_script_url',
+      API_KEY: 'gd_oms_api_key',
+      LOCAL_ORDERS: 'gd_oms_orders_cache',
+      THEME: 'gd_oms_theme'
+    };
+
+    let state = {
+      orders: [],
+      filteredOrders: [],
+      currentPage: 1,
+      pageSize: 15,
+      categoryChartMetric: 'revenue', // 'revenue' | 'count'
+      charts: {
+        trend: null,
+        category: null,
+        clients: null
+      }
+    };
+
+    /********************************************************************
+     * ۳. داده‌های نمونه اولیه (برای پیش‌نمایش فوری و تست کامل قابلیت‌ها)
+     ********************************************************************/
+    function getSampleOrders() {
+      const today = getTodayJalali();
+      const y = today.year;
+      return [
+        {
+          id: 'ORD-1001',
+          parent_id: '',
+          invoice_id: `INV-${y}-01`,
+          title: 'طراحی هویت بصری و ست اداری کافه رستوران روژان',
+          client: 'کافه روژان',
+          category: 'چاپ',
+          dimensions: 'A4 / A5 / کارت ویزیت',
+          order_date: `${y}/01/18`,
+          delivery_date: `${y}/01/26`,
+          duration_hours: 14.5,
+          price: 8500000,
+          payment_status: 'پرداخت شده',
+          paid_amount: 8500000,
+          drive_link: 'https://drive.google.com/drive/my-drive',
+          order_type: 'سفارش جدید',
+          notes: 'چاپ افست با روکش سلفون مخملی و طلاکوب'
+        },
+        {
+          id: 'ORD-1002',
+          parent_id: 'ORD-1001',
+          invoice_id: `INV-${y}-01`,
+          title: 'ری‌سایز منوی کافه روژان برای استند رومیزی',
+          client: 'کافه روژان',
+          category: 'چاپ',
+          dimensions: '15x21 سانتی‌متر',
+          order_date: `${y}/01/28`,
+          delivery_date: `${y}/01/29`,
+          duration_hours: 2,
+          price: 950000,
+          payment_status: 'پرداخت شده',
+          paid_amount: 950000,
+          drive_link: 'https://drive.google.com/drive/my-drive',
+          order_type: 'ری‌سایز',
+          notes: 'بر اساس طرح تایید شده سفارش مادر'
+        },
+        {
+          id: 'ORD-1003',
+          parent_id: '',
+          invoice_id: `INV-${y}-02`,
+          title: 'پکیج ۱۲ قالب پست و استوری کمپین بهاره',
+          client: 'فروشگاه آنلاین دیجی‌استایلینگ',
+          category: 'دیجیتال',
+          dimensions: '1080x1350 و 1080x1920 پیکسل',
+          order_date: `${y}/02/12`,
+          delivery_date: `${y}/02/20`,
+          duration_hours: 18,
+          price: 12000000,
+          payment_status: 'بیعانه (پرداخت بخشی)',
+          paid_amount: 6000000,
+          drive_link: 'https://drive.google.com/drive/my-drive',
+          order_type: 'سفارش جدید',
+          notes: '۵۰ درصد پیش‌پرداخت دریافت شد'
+        },
+        {
+          id: 'ORD-1004',
+          parent_id: 'ORD-1003',
+          invoice_id: `INV-${y}-02`,
+          title: 'اصلاحیه رنگ‌بندی و تایپوگرافی ۳ اسلاید اول',
+          client: 'فروشگاه آنلاین دیجی‌استایلینگ',
+          category: 'دیجیتال',
+          dimensions: '1080x1350 پیکسل',
+          order_date: `${y}/02/22`,
+          delivery_date: `${y}/02/22`,
+          duration_hours: 1.5,
+          price: 0,
+          payment_status: 'رایگان',
+          paid_amount: 0,
+          drive_link: '',
+          order_type: 'اصلاحیه/ویرایش',
+          notes: 'اصلاحیه اول طبق قرارداد رایگان انجام شد'
+        },
+        {
+          id: 'ORD-1005',
+          parent_id: '',
+          invoice_id: `INV-${y}-03`,
+          title: 'طراحی بیلبورد و استرابورد نمایشگاه بین‌المللی',
+          client: 'هلدینگ صنعتی پارس‌تک',
+          category: 'چاپ',
+          dimensions: '1500x500 سانتی‌متر',
+          order_date: `${y}/04/10`,
+          delivery_date: `${y}/04/16`,
+          duration_hours: 11,
+          price: 9800000,
+          payment_status: 'پرداخت شده',
+          paid_amount: 9800000,
+          drive_link: 'https://drive.google.com/drive/my-drive',
+          order_type: 'سفارش جدید',
+          notes: 'خروجی با رزولوشن واقعی و پروفایل رنگی CMYK'
+        },
+        {
+          id: 'ORD-1006',
+          parent_id: 'ORD-1005',
+          invoice_id: `INV-${y}-03`,
+          title: 'ری‌سایز بنر نمایشگاه برای هدر لینکدین و وب‌سایت',
+          client: 'هلدینگ صنعتی پارس‌تک',
+          category: 'دیجیتال',
+          dimensions: '1920x600 پیکسل',
+          order_date: `${y}/04/17`,
+          delivery_date: `${y}/04/17`,
+          duration_hours: 2.5,
+          price: 1400000,
+          payment_status: 'طلب (پرداخت نشده)',
+          paid_amount: 0,
+          drive_link: 'https://drive.google.com/drive/my-drive',
+          order_type: 'ری‌سایز',
+          notes: 'ارسال شده در تلگرام مدیر مارکتینگ'
+        },
+        {
+          id: 'ORD-1007',
+          parent_id: '',
+          invoice_id: `INV-${y}-04`,
+          title: 'طراحی کاتالوگ ۲۴ صفحه‌ای محصولات صادراتی',
+          client: 'شرکت زعفران خراسان',
+          category: 'چاپ',
+          dimensions: '21x29.7 سانتی‌متر (A4)',
+          order_date: `${y}/07/05`,
+          delivery_date: `${y}/07/19`,
+          duration_hours: 28,
+          price: 18500000,
+          payment_status: 'بیعانه (پرداخت بخشی)',
+          paid_amount: 10000000,
+          drive_link: 'https://drive.google.com/drive/my-drive',
+          order_type: 'سفارش جدید',
+          notes: 'نسخه دو زبانه فارسی و انگلیسی'
+        },
+        {
+          id: 'ORD-1008',
+          parent_id: '',
+          invoice_id: `INV-${y}-05`,
+          title: 'طراحی کاور ریلز و تامبنیل یوتیوب (۱۰ عدد)',
+          client: 'آکادمی آموزشی نواندیش',
+          category: 'دیجیتال',
+          dimensions: '1920x1080 پیکسل',
+          order_date: today.formatted,
+          delivery_date: today.formatted,
+          duration_hours: 6.5,
+          price: 4200000,
+          payment_status: 'طلب (پرداخت نشده)',
+          paid_amount: 0,
+          drive_link: 'https://drive.google.com/drive/my-drive',
+          order_type: 'سفارش جدید',
+          notes: 'تحویل فوری'
+        }
+      ];
+    }
+
+    /********************************************************************
+     * ۴. راه‌اندازی اولیه صفحه (Initialization)
+     ********************************************************************/
+    window.addEventListener('DOMContentLoaded', () => {
+      initTheme();
+      const today = getTodayJalali();
+      const monthName = JALALI_MONTH_NAMES[today.month - 1];
+      document.getElementById('todayJalaliHeader').textContent =
+        `امروز: ${formatNumberFA(today.day)} ${monthName} ${formatNumberFA(today.year)} (${today.formatted})`;
+
+      // بارگذاری تنظیمات ذخیره‌شده
+      const savedUrl = localStorage.getItem(STORAGE_KEYS.SCRIPT_URL) || '';
+      const savedKey = localStorage.getItem(STORAGE_KEYS.API_KEY) || 'GD-SECRET-2026';
+      document.getElementById('settingScriptUrl').value = savedUrl;
+      document.getElementById('settingApiKey').value = savedKey;
+
+      // بارگذاری کش محلی یا داده‌های نمونه
+      const cached = localStorage.getItem(STORAGE_KEYS.LOCAL_ORDERS);
+      if (cached) {
+        try {
+          state.orders = JSON.parse(cached);
+        } catch (e) {
+          state.orders = getSampleOrders();
+        }
+      } else {
+        state.orders = getSampleOrders();
+        saveOrdersToCache();
+      }
+
+      refreshDynamicFilterOptions();
+      applyFilters();
+
+      // اگر آدرس وب‌اپ تنظیم شده، خودکار با گوگل شیت همگام‌سازی کن
+      if (savedUrl) {
+        syncFromServer(true);
+      } else {
+        updateConnectionBadge(false);
+      }
+    });
+
+    function initTheme() {
+      const savedTheme = localStorage.getItem(STORAGE_KEYS.THEME) || 'dark';
+      if (savedTheme === 'dark') {
+        document.documentElement.classList.add('dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+      }
+    }
+
+    function toggleTheme() {
+      const isDark = document.documentElement.classList.toggle('dark');
+      localStorage.setItem(STORAGE_KEYS.THEME, isDark ? 'dark' : 'light');
+      renderAllCharts();
+    }
+
+    function showToast(message, type = 'success') {
+      const container = document.getElementById('toastContainer');
+      const el = document.createElement('div');
+      const colors = {
+        success: 'bg-emerald-600 text-white',
+        error: 'bg-rose-600 text-white',
+        info: 'bg-indigo-600 text-white'
+      };
+      el.className = `pointer-events-auto px-4 py-3 rounded-xl shadow-lg text-xs sm:text-sm font-bold flex items-center justify-between gap-3 transition-all duration-300 ${colors[type] || colors.info}`;
+      el.innerHTML = `<span>${message}</span>`;
+      container.appendChild(el);
+      setTimeout(() => {
+        el.style.opacity = '0';
+        setTimeout(() => el.remove(), 300);
+      }, 3500);
+    }
+
+    function updateConnectionBadge(isConnected, isSyncing = false) {
+      const badge = document.getElementById('connectionBadge');
+      if (isSyncing) {
+        badge.className = 'inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-indigo-100 text-indigo-800 dark:bg-indigo-900/50 dark:text-indigo-300';
+        badge.innerHTML = '<span class="w-2 h-2 rounded-full bg-indigo-500 animate-ping"></span>در حال همگام‌سازی...';
+      } else if (isConnected) {
+        badge.className = 'inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300';
+        badge.innerHTML = '<span class="w-2 h-2 rounded-full bg-emerald-500"></span>متصل به Google Sheets';
+      } else {
+        badge.className = 'inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300';
+        badge.innerHTML = '<span class="w-2 h-2 rounded-full bg-amber-500"></span>حالت محلی (آماده اتصال)';
+      }
+    }
+
+    function saveOrdersToCache() {
+      localStorage.setItem(STORAGE_KEYS.LOCAL_ORDERS, JSON.stringify(state.orders));
+    }
+
+    /********************************************************************
+     * ۵. ارتباط با بک‌اند Google Apps Script (بدون خطای CORS)
+     ********************************************************************/
+    function getCredentials() {
+      return {
+        url: (localStorage.getItem(STORAGE_KEYS.SCRIPT_URL) || '').trim(),
+        apiKey: (localStorage.getItem(STORAGE_KEYS.API_KEY) || 'GD-SECRET-2026').trim()
+      };
+    }
+
+    async function callAppsScript(action, extraPayload = {}) {
+      const { url, apiKey } = getCredentials();
+      if (!url) {
+        throw new Error('NO_URL');
+      }
+
+      const bodyObj = Object.assign({}, extraPayload, {
+        action: action,
+        api_key: apiKey
+      });
+
+      // استفاده از text/plain;charset=utf-8 برای جلوگیری کامل از Preflight OPTIONS و خطای CORS در GitHub Pages
+      const response = await fetch(url, {
+        method: 'POST',
+        redirect: 'follow',
+        headers: {
+          'Content-Type': 'text/plain;charset=utf-8'
+        },
+        body: JSON.stringify(bodyObj)
+      });
+
+      const result = await response.json();
+      if (result.status !== 'success') {
+        throw new Error(result.message || 'خطا در پاسخ سرور گوگل اسکریپت');
+      }
+      return result;
+    }
+
+    async function syncFromServer(silent = false) {
+      const { url } = getCredentials();
+      if (!url) {
+        if (!silent) openSettingsModal();
+        return;
+      }
+
+      const syncIcon = document.getElementById('syncIcon');
+      syncIcon.classList.add('animate-spin');
+      updateConnectionBadge(false, true);
+
+      try {
+        const res = await callAppsScript('list');
+        state.orders = Array.isArray(res.data) ? res.data : [];
+        saveOrdersToCache();
+        refreshDynamicFilterOptions();
+        applyFilters();
+        updateConnectionBadge(true);
+        if (!silent) showToast('اطلاعات با موفقیت از گوگل شیت همگام‌سازی شد.');
+      } catch (err) {
+        updateConnectionBadge(false);
+        if (!silent) showToast(err.message, 'error');
+      } finally {
+        syncIcon.classList.remove('animate-spin');
+      }
+    }
+
+    /********************************************************************
+     * ۶. فیلترهای داینامیک زمانی (شمسی) و موضوعی
+     ********************************************************************/
+    function refreshDynamicFilterOptions() {
+      const today = getTodayJalali();
+      const yearsSet = new Set([today.year, today.year - 1]);
+      const clientsSet = new Set();
+      const invoicesSet = new Set();
+
+      state.orders.forEach(o => {
+        const parsed = parseJalaliString(o.order_date);
+        if (parsed) yearsSet.add(parsed.year);
+        if (o.client) clientsSet.add(o.client.trim());
+        if (o.invoice_id) invoicesSet.add(o.invoice_id.trim());
+      });
+
+      // پر کردن سال‌های شمسی
+      const yearSelect = document.getElementById('filterJalaliYear');
+      const currentYearVal = yearSelect.value;
+      const sortedYears = Array.from(yearsSet).sort((a, b) => b - a);
+      yearSelect.innerHTML = '<option value="all">همه سال‌ها</option>' +
+        sortedYears.map(y => `<option value="${y}">سال ${formatNumberFA(y)}</option>`).join('');
+      if (sortedYears.includes(Number(currentYearVal)) || currentYearVal === 'all') {
+        yearSelect.value = currentYearVal;
+      }
+
+      // پر کردن لیست مشتریان
+      const clientSelect = document.getElementById('filterClient');
+      const currentClientVal = clientSelect.value;
+      const sortedClients = Array.from(clientsSet).sort((a, b) => a.localeCompare(b, 'fa'));
+      clientSelect.innerHTML = '<option value="all">همه مشتریان</option>' +
+        sortedClients.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');
+      if (sortedClients.includes(currentClientVal)) clientSelect.value = currentClientVal;
+
+      // پر کردن لیست فاکتورها
+      const invoiceSelect = document.getElementById('filterInvoice');
+      const currentInvVal = invoiceSelect.value;
+      const sortedInvoices = Array.from(invoicesSet).sort();
+      invoiceSelect.innerHTML = '<option value="all">همه فاکتورها</option>' +
+        sortedInvoices.map(inv => `<option value="${escapeHtml(inv)}">${escapeHtml(inv)}</option>`).join('');
+      if (sortedInvoices.includes(currentInvVal)) invoiceSelect.value = currentInvVal;
+
+      // پر کردن Datalistهای داخل فرم ثبت سفارش
+      document.getElementById('clientDatalist').innerHTML =
+        sortedClients.map(c => `<option value="${escapeHtml(c)}">`).join('');
+      document.getElementById('invoiceDatalist').innerHTML =
+        sortedInvoices.map(inv => `<option value="${escapeHtml(inv)}">`).join('');
+    }
+
+    function handleTimeModeChange() {
+      const mode = document.getElementById('filterTimeMode').value;
+      const subWrapper = document.getElementById('subPeriodWrapper');
+      const subSelect = document.getElementById('filterSubPeriod');
+      const subLabel = document.getElementById('subPeriodLabel');
+      const yearSelect = document.getElementById('filterJalaliYear');
+      const today = getTodayJalali();
+
+      // اگر کاربر فیلتر ماهانه/فصلی/شش‌ماهه/سالانه انتخاب کرد و سال روی «همه» بود، سال جاری را انتخاب کن
+      if (mode !== 'all' && mode !== 'weekly' && yearSelect.value === 'all') {
+        yearSelect.value = String(today.year);
+      }
+
+      if (mode === 'monthly') {
+        subWrapper.classList.remove('hidden');
+        subLabel.textContent = 'ماه شمسی';
+        subSelect.innerHTML = JALALI_MONTH_NAMES.map((name, idx) =>
+          `<option value="${idx + 1}">${name}</option>`
+        ).join('');
+        subSelect.value = String(today.month);
+      } else if (mode === 'seasonal') {
+        subWrapper.classList.remove('hidden');
+        subLabel.textContent = 'فصل سال';
+        subSelect.innerHTML = `
+          <option value="1">بهار (فروردین تا خرداد)</option>
+          <option value="2">تابستان (تیر تا شهریور)</option>
+          <option value="3">پاییز (مهر تا آذر)</option>
+          <option value="4">زمستان (دی تا اسفند)</option>
+        `;
+        subSelect.value = String(Math.ceil(today.month / 3));
+      } else if (mode === 'semiannual') {
+        subWrapper.classList.remove('hidden');
+        subLabel.textContent = 'نیم‌سال';
+        subSelect.innerHTML = `
+          <option value="1">نیمه اول سال (فروردین تا شهریور)</option>
+          <option value="2">نیمه دوم سال (مهر تا اسفند)</option>
+        `;
+        subSelect.value = today.month <= 6 ? '1' : '2';
+      } else {
+        subWrapper.classList.add('hidden');
+        subSelect.innerHTML = '';
+      }
+
+      applyFilters();
+    }
+
+    function resetAllFilters() {
+      document.getElementById('filterSearch').value = '';
+      document.getElementById('filterTimeMode').value = 'all';
+      document.getElementById('filterJalaliYear').value = 'all';
+      document.getElementById('subPeriodWrapper').classList.add('hidden');
+      document.getElementById('filterClient').value = 'all';
+      document.getElementById('filterCategory').value = 'all';
+      document.getElementById('filterInvoice').value = 'all';
+      document.getElementById('filterPaymentStatus').value = 'all';
+      applyFilters();
+    }
+
+    function applyFilters() {
+      const searchQ = toEnglishDigits(document.getElementById('filterSearch').value).trim().toLowerCase();
+      const timeMode = document.getElementById('filterTimeMode').value;
+      const selectedYear = document.getElementById('filterJalaliYear').value;
+      const subPeriod = document.getElementById('filterSubPeriod').value;
+      const selectedClient = document.getElementById('filterClient').value;
+      const selectedCategory = document.getElementById('filterCategory').value;
+      const selectedInvoice = document.getElementById('filterInvoice').value;
+      const selectedPaymentStatus = document.getElementById('filterPaymentStatus').value;
+
+      const todayObj = parseJalaliString(getTodayJalali().formatted);
+      const sevenDaysMs = 7 * 24 * 60 * 60 * 1000;
+
+      state.filteredOrders = state.orders.filter(order => {
+        // ۱. جستجوی متنی
+        if (searchQ) {
+          const haystack = toEnglishDigits(
+            `${order.id} ${order.parent_id} ${order.invoice_id} ${order.title} ${order.client} ${order.notes} ${order.dimensions}`
+          ).toLowerCase();
+          if (!haystack.includes(searchQ)) return false;
+        }
+
+        // ۲. فیلتر مشتری، دسته‌بندی، فاکتور، وضعیت پرداخت
+        if (selectedClient !== 'all' && order.client !== selectedClient) return false;
+        if (selectedCategory !== 'all' && order.category !== selectedCategory) return false;
+        if (selectedInvoice !== 'all' && order.invoice_id !== selectedInvoice) return false;
+
+        if (selectedPaymentStatus !== 'all') {
+          if (selectedPaymentStatus === 'has_debt') {
+            const debt = Math.max(0, (Number(order.price) || 0) - (Number(order.paid_amount) || 0));
+            if (debt <= 0 || order.payment_status === 'رایگان' || order.payment_status === 'پرداخت شده') return false;
+          } else if (order.payment_status !== selectedPaymentStatus) {
+            return false;
+          }
+        }
+
+        // ۳. فیلترهای زمانی بر پایه تاریخ شمسی
+        const parsedDate = parseJalaliString(order.order_date);
+
+        if (selectedYear !== 'all') {
+          if (!parsedDate || parsedDate.year !== Number(selectedYear)) return false;
+        }
+
+        if (timeMode === 'weekly') {
+          if (!parsedDate || !todayObj) return false;
+          const diff = todayObj.timestamp - parsedDate.timestamp;
+          if (diff < -86400000 || diff > sevenDaysMs) return false;
+        } else if (timeMode === 'monthly') {
+          if (!parsedDate || parsedDate.month !== Number(subPeriod)) return false;
+        } else if (timeMode === 'seasonal') {
+          if (!parsedDate || parsedDate.season !== Number(subPeriod)) return false;
+        } else if (timeMode === 'semiannual') {
+          if (!parsedDate || parsedDate.halfYear !== Number(subPeriod)) return false;
+        }
+
+        return true;
+      });
+
+      state.currentPage = 1;
+      updateFilterSummaryText();
+      updateKPICards();
+      renderAllCharts();
+      renderOrdersTable();
+    }
+
+    function updateFilterSummaryText() {
+      const timeMode = document.getElementById('filterTimeMode').value;
+      const yearVal = document.getElementById('filterJalaliYear').value;
+      const subSelect = document.getElementById('filterSubPeriod');
+      const subText = subSelect.options[subSelect.selectedIndex]?.text || '';
+
+      let parts = [];
+      if (timeMode === 'weekly') parts.push('۷ روز اخیر');
+      else if (timeMode === 'monthly') parts.push(`ماه ${subText}`);
+      else if (timeMode === 'seasonal') parts.push(`فصل ${subText}`);
+      else if (timeMode === 'semiannual') parts.push(subText);
+      else if (timeMode === 'yearly') parts.push('فیلتر سالانه');
+
+      if (yearVal !== 'all') parts.push(`سال ${formatNumberFA(yearVal)}`);
+
+      document.getElementById('activeFilterSummary').textContent =
+        parts.length > 0 ? `بازه فعال: ${parts.join(' — ')}` : 'نمایش همه زمان‌ها';
+    }
+
+    /********************************************************************
+     * ۷. محاسبه و بروزرسانی کارت‌های آماری (KPI Cards)
+     ********************************************************************/
+    function updateKPICards() {
+      const list = state.filteredOrders;
+
+      let totalOrders = list.length;
+      let mainOrders = 0;
+      let subOrders = 0;
+      let freeOrders = 0;
+
+      let totalBilled = 0;
+      let totalCollected = 0;
+      let totalUnpaidDebt = 0;
+      let debtOrdersCount = 0;
+      let totalHours = 0;
+
+      list.forEach(o => {
+        const isSub = Boolean((o.parent_id && o.parent_id.trim() !== '') || (o.order_type && o.order_type !== 'سفارش جدید'));
+        if (isSub) subOrders++;
+        else mainOrders++;
+
+        if (o.payment_status === 'رایگان') freeOrders++;
+
+        const price = Number(o.price) || 0;
+        const paid = o.payment_status === 'پرداخت شده' ? price : (Number(o.paid_amount) || 0);
+        const debt = (o.payment_status === 'رایگان' || o.payment_status === 'پرداخت شده')
+          ? 0
+          : Math.max(0, price - paid);
+
+        totalBilled += price;
+        totalCollected += paid;
+        totalUnpaidDebt += debt;
+        if (debt > 0) debtOrdersCount++;
+
+        totalHours += (Number(o.duration_hours) || 0);
+      });
+
+      const hourlyRate = totalHours > 0 ? Math.round(totalBilled / totalHours) : 0;
+
+      document.getElementById('kpiTotalOrders').textContent = formatNumberFA(totalOrders);
+      document.getElementById('kpiMainOrders').textContent = formatNumberFA(mainOrders);
+      document.getElementById('kpiSubOrders').textContent = formatNumberFA(subOrders);
+      document.getElementById('kpiFreeOrders').textContent = formatNumberFA(freeOrders);
+
+      document.getElementById('kpiCollectedRevenue').textContent = formatNumberFA(totalCollected);
+      document.getElementById('kpiTotalBilled').textContent = `${formatNumberFA(totalBilled)} تومان`;
+
+      document.getElementById('kpiUnpaidDebt').textContent = formatNumberFA(totalUnpaidDebt);
+      document.getElementById('kpiDebtCount').textContent = `${formatNumberFA(debtOrdersCount)} مورد`;
+
+      document.getElementById('kpiTotalDuration').textContent = formatDurationFA(totalHours);
+      document.getElementById('kpiHourlyRate').textContent = `${formatNumberFA(hourlyRate)} تومان/ساعت`;
+    }
+
+    /********************************************************************
+     * ۸. نمودارهای تعاملی Chart.js
+     ********************************************************************/
+    function setCategoryMetric(metric) {
+      state.categoryChartMetric = metric;
+      const btnRev = document.getElementById('btnCatRevenue');
+      const btnCnt = document.getElementById('btnCatCount');
+      if (metric === 'revenue') {
+        btnRev.className = 'px-2.5 py-1 rounded-md bg-white dark:bg-slate-700 shadow-sm font-semibold transition';
+        btnCnt.className = 'px-2.5 py-1 rounded-md text-slate-500 dark:text-slate-400 transition';
+      } else {
+        btnCnt.className = 'px-2.5 py-1 rounded-md bg-white dark:bg-slate-700 shadow-sm font-semibold transition';
+        btnRev.className = 'px-2.5 py-1 rounded-md text-slate-500 dark:text-slate-400 transition';
+      }
+      renderCategoryChart();
+    }
+
+    function renderAllCharts() {
+      renderTrendChart();
+      renderCategoryChart();
+      renderClientsChart();
+    }
+
+    function getChartThemeColors() {
+      const isDark = document.documentElement.classList.contains('dark');
+      return {
+        textColor: isDark ? '#cbd5e1' : '#475569',
+        gridColor: isDark ? 'rgba(148, 163, 184, 0.12)' : 'rgba(148, 163, 184, 0.25)'
+      };
+    }
+
+    // نمودار ۱: روند درآمد و طلب در طول زمان (شمسی)
+    function renderTrendChart() {
+      const ctx = document.getElementById('chartTrend').getContext('2d');
+      if (state.charts.trend) state.charts.trend.destroy();
+
+      const { textColor, gridColor } = getChartThemeColors();
+      const groupSelect = document.getElementById('trendGroupingMode').value;
+      const timeMode = document.getElementById('filterTimeMode').value;
+
+      let groupBy = groupSelect;
+      if (groupBy === 'auto') {
+        if (timeMode === 'monthly' || timeMode === 'weekly') groupBy = 'day';
+        else if (timeMode === 'seasonal') groupBy = 'month';
+        else groupBy = 'month';
+      }
+
+      const buckets = new Map();
+
+      if (groupBy === 'month') {
+        JALALI_MONTH_NAMES.forEach((mName, idx) => {
+          buckets.set(idx + 1, { label: mName, collected: 0, debt: 0 });
+        });
+      } else if (groupBy === 'season') {
+        ['بهار', 'تابستان', 'پاییز', 'زمستان'].forEach((sName, idx) => {
+          buckets.set(idx + 1, { label: sName, collected: 0, debt: 0 });
+        });
+      }
+
+      state.filteredOrders.forEach(o => {
+        const parsed = parseJalaliString(o.order_date);
+        if (!parsed) return;
+
+        const price = Number(o.price) || 0;
+        const paid = o.payment_status === 'پرداخت شده' ? price : (Number(o.paid_amount) || 0);
+        const debt = (o.payment_status === 'رایگان' || o.payment_status === 'پرداخت شده') ? 0 : Math.max(0, price - paid);
+
+        let key, label;
+        if (groupBy === 'month') {
+          key = parsed.month;
+          label = JALALI_MONTH_NAMES[parsed.month - 1];
+        } else if (groupBy === 'season') {
+          key = parsed.season;
+          label = ['بهار', 'تابستان', 'پاییز', 'زمستان'][parsed.season - 1];
+        } else if (groupBy === 'year') {
+          key = parsed.year;
+          label = `سال ${formatNumberFA(parsed.year)}`;
+        } else {
+          key = parsed.normalized;
+          label = parsed.normalized;
+        }
+
+        if (!buckets.has(key)) {
+          buckets.set(key, { label, collected: 0, debt: 0 });
+        }
+        const item = buckets.get(key);
+        item.collected += paid;
+        item.debt += debt;
+      });
+
+      let entries = Array.from(buckets.entries());
+      if (groupBy === 'year' || groupBy === 'day') {
+        entries.sort((a, b) => String(a[0]).localeCompare(String(b[0])));
+      }
+
+      const labels = entries.map(e => e[1].label);
+      const collectedData = entries.map(e => e[1].collected);
+      const debtData = entries.map(e => e[1].debt);
+
+      state.charts.trend = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels,
+          datasets: [
+            {
+              label: 'درآمد وصول‌شده (تومان)',
+              data: collectedData,
+              backgroundColor: 'rgba(16, 185, 129, 0.8)',
+              borderColor: '#10b981',
+              borderRadius: 6,
+              order: 2
+            },
+            {
+              label: 'طلب باقی‌مانده (تومان)',
+              data: debtData,
+              backgroundColor: 'rgba(244, 63, 94, 0.8)',
+              borderColor: '#f43f5e',
+              borderRadius: 6,
+              order: 1
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              labels: { color: textColor, font: { family: 'Vazirmatn' } }
+            },
+            tooltip: {
+              titleFont: { family: 'Vazirmatn' },
+              bodyFont: { family: 'Vazirmatn' },
+              callbacks: {
+                label: ctx => `${ctx.dataset.label}: ${formatNumberFA(ctx.raw)} تومان`
+              }
+            }
+          },
+          scales: {
+            x: {
+              ticks: { color: textColor, font: { family: 'Vazirmatn' } },
+              grid: { color: gridColor }
+            },
+            y: {
+              ticks: {
+                color: textColor,
+                font: { family: 'Vazirmatn' },
+                callback: val => formatNumberFA(val)
+              },
+              grid: { color: gridColor }
+            }
+          }
+        }
+      });
+    }
+
+    // نمودار ۲: دایره‌ای سهم چاپ در برابر دیجیتال
+    function renderCategoryChart() {
+      const ctx = document.getElementById('chartCategory').getContext('2d');
+      if (state.charts.category) state.charts.category.destroy();
+
+      const { textColor } = getChartThemeColors();
+      let stats = {
+        'دیجیتال': { count: 0, revenue: 0 },
+        'چاپ': { count: 0, revenue: 0 }
+      };
+
+      state.filteredOrders.forEach(o => {
+        const cat = o.category === 'چاپ' ? 'چاپ' : 'دیجیتال';
+        stats[cat].count += 1;
+        stats[cat].revenue += (Number(o.price) || 0);
+      });
+
+      const isRev = state.categoryChartMetric === 'revenue';
+      const dataValues = isRev
+        ? [stats['دیجیتال'].revenue, stats['چاپ'].revenue]
+        : [stats['دیجیتال'].count, stats['چاپ'].count];
+
+      document.getElementById('categorySummaryStats').innerHTML = `
+        <div class="p-2 rounded-xl bg-indigo-50/70 dark:bg-indigo-950/40">
+          <div class="text-indigo-600 dark:text-indigo-400 font-bold">دیجیتال (${formatNumberFA(stats['دیجیتال'].count)} سفارش)</div>
+          <div class="font-extrabold mt-0.5">${formatNumberFA(stats['دیجیتال'].revenue)} ت</div>
+        </div>
+        <div class="p-2 rounded-xl bg-amber-50/70 dark:bg-amber-950/40">
+          <div class="text-amber-600 dark:text-amber-400 font-bold">چاپ (${formatNumberFA(stats['چاپ'].count)} سفارش)</div>
+          <div class="font-extrabold mt-0.5">${formatNumberFA(stats['چاپ'].revenue)} ت</div>
+        </div>
+      `;
+
+      state.charts.category = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels: ['دیجیتال', 'چاپ'],
+          datasets: [{
+            data: dataValues,
+            backgroundColor: ['#6366f1', '#f59e0b'],
+            borderWidth: 0,
+            hoverOffset: 6
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          cutout: '65%',
+          plugins: {
+            legend: {
+              position: 'bottom',
+              labels: { color: textColor, font: { family: 'Vazirmatn' } }
+            },
+            tooltip: {
+              titleFont: { family: 'Vazirmatn' },
+              bodyFont: { family: 'Vazirmatn' },
+              callbacks: {
+                label: ctx => isRev
+                  ? `${ctx.label}: ${formatNumberFA(ctx.raw)} تومان`
+                  : `${ctx.label}: ${formatNumberFA(ctx.raw)} سفارش`
+              }
+            }
+          }
+        }
+      });
+    }
+
+    // نمودار ۳: برترین سفارش‌دهنده‌ها (درآمدزایی و بدهی)
+    function renderClientsChart() {
+      const ctx = document.getElementById('chartClients').getContext('2d');
+      if (state.charts.clients) state.charts.clients.destroy();
+
+      const { textColor, gridColor } = getChartThemeColors();
+      const clientMap = new Map();
+
+      state.filteredOrders.forEach(o => {
+        const client = (o.client || 'نامشخص').trim();
+        const price = Number(o.price) || 0;
+        const paid = o.payment_status === 'پرداخت شده' ? price : (Number(o.paid_amount) || 0);
+        const debt = (o.payment_status === 'رایگان' || o.payment_status === 'پرداخت شده') ? 0 : Math.max(0, price - paid);
+
+        if (!clientMap.has(client)) {
+          clientMap.set(client, { client, paid: 0, debt: 0, total: 0 });
+        }
+        const rec = clientMap.get(client);
+        rec.paid += paid;
+        rec.debt += debt;
+        rec.total += price;
+      });
+
+      const topClients = Array.from(clientMap.values())
+        .sort((a, b) => b.total - a.total)
+        .slice(0, 8);
+
+      state.charts.clients = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: topClients.map(c => c.client),
+          datasets: [
+            {
+              label: 'درآمد وصول‌شده (تومان)',
+              data: topClients.map(c => c.paid),
+              backgroundColor: 'rgba(16, 185, 129, 0.85)',
+              borderRadius: 6
+            },
+            {
+              label: 'بدهی / طلب باقی‌مانده (تومان)',
+              data: topClients.map(c => c.debt),
+              backgroundColor: 'rgba(244, 63, 94, 0.85)',
+              borderRadius: 6
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              labels: { color: textColor, font: { family: 'Vazirmatn' } }
+            },
+            tooltip: {
+              titleFont: { family: 'Vazirmatn' },
+              bodyFont: { family: 'Vazirmatn' },
+              callbacks: {
+                label: ctx => `${ctx.dataset.label}: ${formatNumberFA(ctx.raw)} تومان`
+              }
+            }
+          },
+          scales: {
+            x: {
+              ticks: { color: textColor, font: { family: 'Vazirmatn' } },
+              grid: { color: gridColor }
+            },
+            y: {
+              ticks: {
+                color: textColor,
+                font: { family: 'Vazirmatn' },
+                callback: val => formatNumberFA(val)
+              },
+              grid: { color: gridColor }
+            }
+          }
+        }
+      });
+    }
+
+    /********************************************************************
+     * ۹. جدول سفارشات با ساختار درختی (سفارش مادر و زیرمجموعه‌ها)
+     ********************************************************************/
+    function escapeHtml(str) {
+      return String(str || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    function organizeTreeRows(ordersList) {
+      const isTreeMode = document.getElementById('toggleTreeView').checked;
+
+      // مرتب‌سازی اولیه بر اساس تاریخ و شناسه (جدیدترین بالاتر)
+      const sorted = [...ordersList].sort((a, b) => {
+        const da = parseJalaliString(a.order_date)?.normalized || '';
+        const db = parseJalaliString(b.order_date)?.normalized || '';
+        if (db !== da) return db.localeCompare(da);
+        return String(b.id).localeCompare(String(a.id));
+      });
+
+      if (!isTreeMode) {
+        return sorted.map(item => ({ order: item, isChild: false, childrenCount: 0 }));
+      }
+
+      const byId = new Map();
+      const childrenMap = new Map();
+
+      sorted.forEach(o => {
+        byId.set(o.id, o);
+      });
+
+      const roots = [];
+      sorted.forEach(o => {
+        const pId = (o.parent_id || '').trim();
+        if (pId && byId.has(pId)) {
+          if (!childrenMap.has(pId)) childrenMap.set(pId, []);
+          childrenMap.get(pId).push(o);
+        } else {
+          roots.push(o);
+        }
+      });
+
+      const resultRows = [];
+      roots.forEach(root => {
+        const kids = childrenMap.get(root.id) || [];
+        // مرتب‌سازی زیرمجموعه‌ها به ترتیب ثبت
+        kids.sort((a, b) => String(a.id).localeCompare(String(b.id)));
+        resultRows.push({ order: root, isChild: false, childrenCount: kids.length });
+        kids.forEach(child => {
+          resultRows.push({ order: child, isChild: true, childrenCount: 0 });
+        });
+      });
+
+      return resultRows;
+    }
+
+    function changePageSize() {
+      state.pageSize = Number(document.getElementById('pageSizeSelect').value) || 15;
+      state.currentPage = 1;
+      renderOrdersTable();
+    }
+
+    function goToPage(page) {
+      state.currentPage = page;
+      renderOrdersTable();
+    }
+
+    function renderOrdersTable() {
+      const tbody = document.getElementById('ordersTableBody');
+      const structuredRows = organizeTreeRows(state.filteredOrders);
+      const totalRows = structuredRows.length;
+
+      document.getElementById('tableCountBadge').textContent = `${formatNumberFA(totalRows)} سفارش`;
+
+      const totalPages = Math.max(1, Math.ceil(totalRows / state.pageSize));
+      if (state.currentPage > totalPages) state.currentPage = totalPages;
+
+      const startIdx = (state.currentPage - 1) * state.pageSize;
+      const endIdx = Math.min(startIdx + state.pageSize, totalRows);
+      const pageItems = structuredRows.slice(startIdx, endIdx);
+
+      document.getElementById('paginationInfo').textContent = totalRows === 0
+        ? 'هیچ سفارشی با این فیلترها یافت نشد'
+        : `نمایش ${formatNumberFA(startIdx + 1)} تا ${formatNumberFA(endIdx)} از ${formatNumberFA(totalRows)} سفارش`;
+
+      renderPaginationButtons(totalPages);
+
+      if (pageItems.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="10" class="py-12 text-center text-slate-400">
+              هیچ سفارشی مطابق با فیلترهای انتخابی شما یافت نشد.
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      tbody.innerHTML = pageItems.map(({ order, isChild, childrenCount }) => {
+        const price = Number(order.price) || 0;
+        const paid = order.payment_status === 'پرداخت شده' ? price : (Number(order.paid_amount) || 0);
+        const debt = (order.payment_status === 'رایگان' || order.payment_status === 'پرداخت شده')
+          ? 0
+          : Math.max(0, price - paid);
+
+        // استایل وضعیت پرداخت
+        let statusBadgeClass = '';
+        if (order.payment_status === 'پرداخت شده') {
+          statusBadgeClass = 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/80 dark:text-emerald-300 border-emerald-300 dark:border-emerald-800';
+        } else if (order.payment_status === 'بیعانه (پرداخت بخشی)') {
+          statusBadgeClass = 'bg-amber-100 text-amber-800 dark:bg-amber-950/80 dark:text-amber-300 border-amber-300 dark:border-amber-800';
+        } else if (order.payment_status === 'رایگان') {
+          statusBadgeClass = 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 border-slate-300 dark:border-slate-700';
+        } else {
+          statusBadgeClass = 'bg-rose-100 text-rose-800 dark:bg-rose-950/80 dark:text-rose-300 border-rose-300 dark:border-rose-800';
+        }
+
+        // استایل نوع تسک
+        let typeBadgeClass = 'bg-indigo-50 text-indigo-700 dark:bg-indigo-950/70 dark:text-indigo-300';
+        if (order.order_type === 'ری‌سایز') typeBadgeClass = 'bg-purple-50 text-purple-700 dark:bg-purple-950/70 dark:text-purple-300';
+        else if (order.order_type === 'اصلاحیه/ویرایش') typeBadgeClass = 'bg-amber-50 text-amber-700 dark:bg-amber-950/70 dark:text-amber-300';
+        else if (order.order_type === 'نسخه جایگزین') typeBadgeClass = 'bg-cyan-50 text-cyan-700 dark:bg-cyan-950/70 dark:text-cyan-300';
+
+        const rowBgClass = isChild
+          ? 'bg-indigo-50/25 dark:bg-indigo-950/15 hover:bg-indigo-50/60 dark:hover:bg-indigo-950/30'
+          : 'hover:bg-slate-50/90 dark:hover:bg-slate-800/40';
+
+        return `
+          <tr class="${rowBgClass} transition">
+            <!-- ستون ۱: شناسه و درختواره -->
+            <td class="py-3.5 px-4 whitespace-nowrap">
+              <div class="flex items-center gap-1.5 ${isChild ? 'pr-5 tree-branch' : ''}">
+                <span class="font-mono text-xs font-extrabold px-2 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200">
+                  ${escapeHtml(order.id)}
+                </span>
+                ${childrenCount > 0 ? `<span class="text-[11px] px-1.5 py-0.5 rounded-md bg-indigo-100 dark:bg-indigo-900/60 text-indigo-700 dark:text-indigo-300 font-bold" title="دارای زیرمجموعه">+${formatNumberFA(childrenCount)}</span>` : ''}
+              </div>
+              ${order.parent_id ? `<div class="text-[11px] text-slate-400 mt-1 ${isChild ? 'pr-5' : ''}">مادر: <span class="font-mono">${escapeHtml(order.parent_id)}</span></div>` : ''}
+            </td>
+
+            <!-- ستون ۲: عنوان و نوع تسک -->
+            <td class="py-3.5 px-4">
+              <div class="font-bold text-slate-900 dark:text-white leading-snug">${escapeHtml(order.title)}</div>
+              <div class="flex flex-wrap items-center gap-1.5 mt-1">
+                <span class="text-[11px] px-2 py-0.5 rounded-md font-semibold ${typeBadgeClass}">${escapeHtml(order.order_type || 'سفارش جدید')}</span>
+                ${order.notes ? `<span class="text-xs text-slate-400 truncate max-w-[220px]" title="${escapeHtml(order.notes)}">• ${escapeHtml(order.notes)}</span>` : ''}
+              </div>
+            </td>
+
+            <!-- ستون ۳: سفارش‌دهنده و فاکتور -->
+            <td class="py-3.5 px-3 whitespace-nowrap">
+              <div class="font-semibold text-slate-800 dark:text-slate-200">${escapeHtml(order.client)}</div>
+              ${order.invoice_id ? `<div class="text-[11px] font-mono text-slate-500 dark:text-slate-400 mt-0.5">فاکتور: ${escapeHtml(order.invoice_id)}</div>` : '<div class="text-[11px] text-slate-400">—</div>'}
+            </td>
+
+            <!-- ستون ۴: خروجی و ابعاد -->
+            <td class="py-3.5 px-3 whitespace-nowrap">
+              <span class="inline-block text-xs font-bold px-2 py-0.5 rounded-md ${order.category === 'چاپ' ? 'bg-amber-100 text-amber-800 dark:bg-amber-950/70 dark:text-amber-300' : 'bg-sky-100 text-sky-800 dark:bg-sky-950/70 dark:text-sky-300'}">
+                ${escapeHtml(order.category)}
+              </span>
+              <div class="text-xs text-slate-500 dark:text-slate-400 mt-1">${escapeHtml(order.dimensions || '—')}</div>
+            </td>
+
+            <!-- ستون ۵: تاریخ ثبت و تحویل -->
+            <td class="py-3.5 px-3 whitespace-nowrap text-xs">
+              <div class="font-semibold text-slate-800 dark:text-slate-200">ثبت: <span class="font-mono">${escapeHtml(order.order_date || '—')}</span></div>
+              <div class="text-slate-500 dark:text-slate-400 mt-0.5">تحویل: <span class="font-mono">${escapeHtml(order.delivery_date || '—')}</span></div>
+            </td>
+
+            <!-- ستون ۶: زمان طراحی -->
+            <td class="py-3.5 px-3 whitespace-nowrap text-xs font-semibold text-slate-700 dark:text-slate-300">
+              ${formatDurationFA(order.duration_hours)}
+            </td>
+
+            <!-- ستون ۷: مبلغ کل -->
+            <td class="py-3.5 px-3 whitespace-nowrap font-bold text-slate-900 dark:text-white">
+              ${order.payment_status === 'رایگان' ? '<span class="text-xs text-slate-400">رایگان (۰)</span>' : `${formatNumberFA(price)} <span class="text-[11px] font-normal text-slate-400">ت</span>`}
+            </td>
+
+            <!-- ستون ۸: تغییر سریع وضعیت پرداخت با یک کلیک -->
+            <td class="py-3.5 px-3 whitespace-nowrap">
+              <button onclick="quickTogglePaymentStatus('${escapeHtml(order.id)}')" title="کلیک برای تغییر سریع وضعیت پرداخت" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs font-bold border transition hover:scale-105 ${statusBadgeClass}">
+                <span>${escapeHtml(order.payment_status)}</span>
+                <svg class="w-3.5 h-3.5 opacity-70" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
+                </svg>
+              </button>
+            </td>
+
+            <!-- ستون ۹: دریافتی و مانده طلب -->
+            <td class="py-3.5 px-3 whitespace-nowrap text-xs">
+              <div class="text-emerald-600 dark:text-emerald-400 font-bold">دریافتی: ${formatNumberFA(paid)}</div>
+              ${debt > 0
+                ? `<div class="text-rose-600 dark:text-rose-400 font-bold mt-0.5">مانده: ${formatNumberFA(debt)}</div>`
+                : `<div class="text-slate-400 mt-0.5">تسویه کامل</div>`
+              }
+            </td>
+
+            <!-- ستون ۱۰: دکمه‌های عملیات -->
+            <td class="py-3.5 px-4 whitespace-nowrap text-center">
+              <div class="inline-flex items-center gap-1">
+                <!-- باز کردن فایل گوگل درایو -->
+                ${order.drive_link
+                  ? `<a href="${escapeHtml(order.drive_link)}" target="_blank" rel="noopener noreferrer" class="p-1.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/60 dark:hover:bg-emerald-900 text-emerald-600 dark:text-emerald-400 transition" title="باز کردن فایل پروژه در Google Drive">
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
+                      </svg>
+                    </a>`
+                  : `<span class="p-1.5 rounded-lg text-slate-300 dark:text-slate-700 cursor-not-allowed" title="لینک درایو ثبت نشده">
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
+                      </svg>
+                    </span>`
+                }
+
+                <!-- ثبت سریع زیرمجموعه (ری‌سایز/اصلاحیه) برای این سفارش -->
+                <button onclick="openSubOrderModal('${escapeHtml(order.id)}')" class="p-1.5 rounded-lg bg-purple-50 hover:bg-purple-100 dark:bg-purple-950/60 dark:hover:bg-purple-900 text-purple-600 dark:text-purple-400 transition" title="ثبت سریع ری‌سایز یا اصلاحیه زیرمجموعه این سفارش">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                  </svg>
+                </button>
+
+                <!-- ویرایش سریع -->
+                <button onclick="openOrderModal('${escapeHtml(order.id)}')" class="p-1.5 rounded-lg bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-950/60 dark:hover:bg-indigo-900 text-indigo-600 dark:text-indigo-400 transition" title="ویرایش سفارش">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
+                  </svg>
+                </button>
+
+                <!-- حذف سفارش -->
+                <button onclick="handleDeleteOrder('${escapeHtml(order.id)}')" class="p-1.5 rounded-lg bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/60 dark:hover:bg-rose-900 text-rose-600 dark:text-rose-400 transition" title="حذف سفارش">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+                  </svg>
+                </button>
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function renderPaginationButtons(totalPages) {
+      const container = document.getElementById('paginationControls');
+      if (totalPages <= 1) {
+        container.innerHTML = '';
+        return;
+      }
+
+      let html = '';
+      for (let p = 1; p <= totalPages; p++) {
+        const active = p === state.currentPage;
+        html += `
+          <button onclick="goToPage(${p})" class="px-3 py-1 rounded-lg font-bold transition ${
+            active
+              ? 'bg-indigo-600 text-white shadow-sm'
+              : 'bg-slate-200/70 hover:bg-slate-300 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300'
+          }">
+            ${formatNumberFA(p)}
+          </button>
+        `;
+      }
+      container.innerHTML = html;
+    }
+
+    /********************************************************************
+     * ۱۰. عملیات CRUD سفارشات (ثبت، ویرایش، تغییر وضعیت یک‌کلیکی، حذف)
+     ********************************************************************/
+    function populateParentDropdown(excludeId = '') {
+      const select = document.getElementById('formParentId');
+      const candidates = state.orders.filter(o => o.id !== excludeId);
+      select.innerHTML = '<option value="">— بدون سفارش مادر (این یک سفارش اصلی است) —</option>' +
+        candidates.map(o =>
+          `<option value="${escapeHtml(o.id)}">${escapeHtml(o.id)} | ${escapeHtml(o.title)} (${escapeHtml(o.client)})</option>`
+        ).join('');
+    }
+
+    function setTodayInInput(inputId) {
+      document.getElementById(inputId).value = getTodayJalali().formatted;
+    }
+
+    function updateDecimalDuration() {
+      const h = Math.max(0, parseInt(document.getElementById('formDurationHoursPart').value, 10) || 0);
+      const m = Math.max(0, parseInt(document.getElementById('formDurationMinutesPart').value, 10) || 0);
+      const decimal = Math.round((h + (m / 60)) * 100) / 100;
+      document.getElementById('formDurationHours').value = decimal;
+      document.getElementById('durationPreviewText').textContent = `معادل: ${formatDurationFA(decimal)}`;
+    }
+
+    function setDurationInputsFromDecimal(decimalHours) {
+      const num = Math.max(0, Number(decimalHours) || 0);
+      const totalMins = Math.round(num * 60);
+      const h = Math.floor(totalMins / 60);
+      const m = totalMins % 60;
+      document.getElementById('formDurationHoursPart').value = h > 0 ? h : '';
+      document.getElementById('formDurationMinutesPart').value = m > 0 ? m : '';
+      document.getElementById('formDurationHours').value = num;
+      document.getElementById('durationPreviewText').textContent = `معادل: ${formatDurationFA(num)}`;
+    }
+
+    function syncPaymentFields(statusChangedByUser = false) {
+      const priceInput = document.getElementById('formPrice');
+      const statusSelect = document.getElementById('formPaymentStatus');
+      const paidInput = document.getElementById('formPaidAmount');
+
+      const price = Math.max(0, Number(priceInput.value) || 0);
+      const status = statusSelect.value;
+
+      document.getElementById('priceFormattedPreview').textContent = `${formatNumberFA(price)} تومان`;
+
+      if (status === 'پرداخت شده') {
+        paidInput.value = price;
+        paidInput.readOnly = true;
+      } else if (status === 'طلب (پرداخت نشده)') {
+        paidInput.value = 0;
+        paidInput.readOnly = true;
+      } else if (status === 'رایگان') {
+        priceInput.value = 0;
+        paidInput.value = 0;
+        paidInput.readOnly = true;
+        document.getElementById('priceFormattedPreview').textContent = 'رایگان (۰ تومان)';
+      } else {
+        // بیعانه
+        paidInput.readOnly = false;
+        if (statusChangedByUser && (Number(paidInput.value) === 0 || Number(paidInput.value) >= price)) {
+          paidInput.value = Math.round(price / 2);
+        }
+      }
+      updateRemainingPreview();
+    }
+
+    function updateRemainingPreview() {
+      const price = Math.max(0, Number(document.getElementById('formPrice').value) || 0);
+      const status = document.getElementById('formPaymentStatus').value;
+      const paid = Math.max(0, Number(document.getElementById('formPaidAmount').value) || 0);
+      const rem = (status === 'رایگان' || status === 'پرداخت شده') ? 0 : Math.max(0, price - paid);
+      document.getElementById('remainingDebtPreview').textContent = `مانده طلب: ${formatNumberFA(rem)} تومان`;
+    }
+
+    function handleOrderTypeChange() {
+      const type = document.getElementById('formOrderType').value;
+      const parentSelect = document.getElementById('formParentId');
+      if (type !== 'سفارش جدید' && !parentSelect.value && state.orders.length > 0) {
+        parentSelect.focus();
+      }
+    }
+
+    function handleParentSelectChange() {
+      const parentId = document.getElementById('formParentId').value;
+      const btnCopy = document.getElementById('btnCopyParent');
+      if (parentId) {
+        btnCopy.classList.remove('hidden');
+      } else {
+        btnCopy.classList.add('hidden');
+      }
+    }
+
+    function copyFromParentOrder() {
+      const parentId = document.getElementById('formParentId').value;
+      const parent = state.orders.find(o => o.id === parentId);
+      if (!parent) return;
+
+      document.getElementById('formClient').value = parent.client || '';
+      document.getElementById('formInvoiceId').value = parent.invoice_id || '';
+      document.getElementById('formCategory').value = parent.category || 'دیجیتال';
+      if (!document.getElementById('formTitle').value) {
+        const orderType = document.getElementById('formOrderType').value;
+        document.getElementById('formTitle').value = `${orderType} - ${parent.title}`;
+      }
+      showToast('اطلاعات پایه از سفارش مادر کپی شد.', 'info');
+    }
+
+    function openOrderModal(editOrderId = null) {
+      const modal = document.getElementById('orderModal');
+      const form = document.getElementById('orderForm');
+      form.reset();
+
+      populateParentDropdown(editOrderId || '');
+
+      if (editOrderId) {
+        const target = state.orders.find(o => o.id === editOrderId);
+        if (!target) return;
+
+        document.getElementById('orderModalTitle').textContent = `ویرایش سفارش (${target.id})`;
+        document.getElementById('formOrderId').value = target.id;
+        document.getElementById('formOrderType').value = target.order_type || 'سفارش جدید';
+        document.getElementById('formParentId').value = target.parent_id || '';
+        document.getElementById('formTitle').value = target.title || '';
+        document.getElementById('formClient').value = target.client || '';
+        document.getElementById('formInvoiceId').value = target.invoice_id || '';
+        document.getElementById('formCategory').value = target.category || 'دیجیتال';
+        document.getElementById('formDimensions').value = target.dimensions || '';
+        document.getElementById('formOrderDate').value = target.order_date || getTodayJalali().formatted;
+        document.getElementById('formDeliveryDate').value = target.delivery_date || '';
+        setDurationInputsFromDecimal(target.duration_hours);
+        document.getElementById('formPrice').value = Number(target.price) || 0;
+        document.getElementById('formPaymentStatus').value = target.payment_status || 'طلب (پرداخت نشده)';
+        document.getElementById('formPaidAmount').value = Number(target.paid_amount) || 0;
+        document.getElementById('formDriveLink').value = target.drive_link || '';
+        document.getElementById('formNotes').value = target.notes || '';
+        handleParentSelectChange();
+        syncPaymentFields(false);
+      } else {
+        document.getElementById('orderModalTitle').textContent = 'ثبت سفارش جدید';
+        document.getElementById('formOrderId').value = '';
+        document.getElementById('formOrderDate').value = getTodayJalali().formatted;
+        document.getElementById('formDeliveryDate').value = getTodayJalali().formatted;
+        setDurationInputsFromDecimal(1);
+        document.getElementById('formPrice').value = '';
+        document.getElementById('formPaymentStatus').value = 'طلب (پرداخت نشده)';
+        document.getElementById('formPaidAmount').value = 0;
+        handleParentSelectChange();
+        syncPaymentFields(false);
+      }
+
+      modal.classList.remove('hidden');
+    }
+
+    // باز کردن سریع فرم برای ثبت ری‌سایز/اصلاحیه زیرمجموعه یک سفارش خاص
+    function openSubOrderModal(parentId) {
+      openOrderModal(null);
+      const parent = state.orders.find(o => o.id === parentId);
+      if (!parent) return;
+
+      document.getElementById('orderModalTitle').textContent = `ثبت زیرمجموعه برای (${parent.id})`;
+      document.getElementById('formOrderType').value = 'ری‌سایز';
+      document.getElementById('formParentId').value = parent.id;
+      document.getElementById('formClient').value = parent.client || '';
+      document.getElementById('formInvoiceId').value = parent.invoice_id || '';
+      document.getElementById('formCategory').value = parent.category || 'دیجیتال';
+      document.getElementById('formTitle').value = `ری‌سایز ${parent.title}`;
+      handleParentSelectChange();
+    }
+
+    function closeOrderModal() {
+      document.getElementById('orderModal').classList.add('hidden');
+    }
+
+    function generateLocalNextId() {
+      let max = 1000;
+      state.orders.forEach(o => {
+        const m = String(o.id || '').match(/ORD-(\d+)/i);
+        if (m && m[1]) {
+          const n = parseInt(m[1], 10);
+          if (n > max) max = n;
+        }
+      });
+      return `ORD-${max + 1}`;
+    }
+
+    async function handleOrderSubmit(e) {
+      e.preventDefault();
+      updateDecimalDuration();
+
+      const existingId = document.getElementById('formOrderId').value.trim();
+      const price = Math.max(0, Number(document.getElementById('formPrice').value) || 0);
+      const paymentStatus = document.getElementById('formPaymentStatus').value;
+      let paidAmount = Math.max(0, Number(document.getElementById('formPaidAmount').value) || 0);
+
+      if (paymentStatus === 'پرداخت شده') paidAmount = price;
+      else if (paymentStatus === 'طلب (پرداخت نشده)' || paymentStatus === 'رایگان') paidAmount = 0;
+
+      const orderPayload = {
+        id: existingId || generateLocalNextId(),
+        parent_id: document.getElementById('formParentId').value.trim(),
+        invoice_id: toEnglishDigits(document.getElementById('formInvoiceId').value.trim()),
+        title: document.getElementById('formTitle').value.trim(),
+        client: document.getElementById('formClient').value.trim(),
+        category: document.getElementById('formCategory').value,
+        dimensions: document.getElementById('formDimensions').value.trim(),
+        order_date: toEnglishDigits(document.getElementById('formOrderDate').value.trim()),
+        delivery_date: toEnglishDigits(document.getElementById('formDeliveryDate').value.trim()),
+        duration_hours: Number(document.getElementById('formDurationHours').value) || 0,
+        price: paymentStatus === 'رایگان' ? 0 : price,
+        payment_status: paymentStatus,
+        paid_amount: paidAmount,
+        drive_link: document.getElementById('formDriveLink').value.trim(),
+        order_type: document.getElementById('formOrderType').value,
+        notes: document.getElementById('formNotes').value.trim()
+      };
+
+      const btn = document.getElementById('btnSubmitOrder');
+      btn.disabled = true;
+      btn.textContent = 'در حال ذخیره...';
+
+      try {
+        const { url } = getCredentials();
+        if (url) {
+          const action = existingId ? 'update' : 'create';
+          const res = await callAppsScript(action, { order: orderPayload });
+          const savedRecord = res.data || orderPayload;
+
+          if (existingId) {
+            const idx = state.orders.findIndex(o => o.id === existingId);
+            if (idx !== -1) state.orders[idx] = savedRecord;
+          } else {
+            state.orders.push(savedRecord);
+          }
+          updateConnectionBadge(true);
+        } else {
+          // ذخیره در حالت محلی
+          if (existingId) {
+            const idx = state.orders.findIndex(o => o.id === existingId);
+            if (idx !== -1) state.orders[idx] = orderPayload;
+          } else {
+            state.orders.push(orderPayload);
+          }
+        }
+
+        saveOrdersToCache();
+        refreshDynamicFilterOptions();
+        applyFilters();
+        closeOrderModal();
+        showToast(existingId ? 'سفارش با موفقیت ویرایش شد.' : 'سفارش جدید با موفقیت ثبت شد.');
+      } catch (err) {
+        showToast(err.message, 'error');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'ذخیره سفارش';
+      }
+    }
+
+    // تغییر سریع وضعیت پرداخت با یک کلیک روی جدول
+    async function quickTogglePaymentStatus(orderId) {
+      const idx = state.orders.findIndex(o => o.id === orderId);
+      if (idx === -1) return;
+
+      const current = state.orders[idx];
+      const cycle = ['طلب (پرداخت نشده)', 'پرداخت شده', 'بیعانه (پرداخت بخشی)', 'رایگان'];
+      const nextIdx = (cycle.indexOf(current.payment_status) + 1) % cycle.length;
+      const nextStatus = cycle[nextIdx];
+
+      const updated = Object.assign({}, current, { payment_status: nextStatus });
+      const price = Number(updated.price) || 0;
+
+      if (nextStatus === 'پرداخت شده') {
+        updated.paid_amount = price;
+      } else if (nextStatus === 'طلب (پرداخت نشده)') {
+        updated.paid_amount = 0;
+      } else if (nextStatus === 'بیعانه (پرداخت بخشی)') {
+        updated.paid_amount = Math.round(price / 2);
+      } else if (nextStatus === 'رایگان') {
+        updated.paid_amount = 0;
+      }
+
+      // بروزرسانی آنی در UI
+      state.orders[idx] = updated;
+      saveOrdersToCache();
+      applyFilters();
+
+      const { url } = getCredentials();
+      if (url) {
+        try {
+          await callAppsScript('update', { order: updated });
+          showToast(`وضعیت مالی ${orderId} به «${nextStatus}» تغییر یافت.`);
+        } catch (err) {
+          showToast('خطا در همگام‌سازی وضعیت پرداخت با شیت: ' + err.message, 'error');
+        }
+      } else {
+        showToast(`وضعیت مالی ${orderId} به «${nextStatus}» تغییر یافت.`);
+      }
+    }
+
+    async function handleDeleteOrder(orderId) {
+      if (!confirm(`آیا از حذف سفارش ${orderId} اطمینان دارید؟`)) return;
+
+      const { url } = getCredentials();
+      try {
+        if (url) {
+          await callAppsScript('delete', { id: orderId });
+        }
+        state.orders = state.orders.filter(o => o.id !== orderId);
+        saveOrdersToCache();
+        refreshDynamicFilterOptions();
+        applyFilters();
+        showToast(`سفارش ${orderId} حذف شد.`);
+      } catch (err) {
+        showToast(err.message, 'error');
+      }
+    }
+
+    /********************************************************************
+     * ۱۱. تنظیمات اتصال، خروجی CSV و بارگذاری داده‌های آزمایشی
+     ********************************************************************/
+    function openSettingsModal() {
+      document.getElementById('settingsModal').classList.remove('hidden');
+    }
+
+    function closeSettingsModal() {
+      document.getElementById('settingsModal').classList.add('hidden');
+    }
+
+    async function testConnection() {
+      const url = document.getElementById('settingScriptUrl').value.trim();
+      const apiKey = document.getElementById('settingApiKey').value.trim();
+
+      if (!url) {
+        showToast('لطفاً ابتدا Web App URL را وارد کنید.', 'error');
+        return;
+      }
+
+      localStorage.setItem(STORAGE_KEYS.SCRIPT_URL, url);
+      localStorage.setItem(STORAGE_KEYS.API_KEY, apiKey);
+
+      const btn = document.getElementById('btnTestConn');
+      btn.textContent = 'در حال بررسی...';
+      btn.disabled = true;
+
+      try {
+        await callAppsScript('ping');
+        updateConnectionBadge(true);
+        showToast('اتصال با Google Sheets با موفقیت برقرار شد!');
+      } catch (err) {
+        updateConnectionBadge(false);
+        showToast(err.message, 'error');
+      } finally {
+        btn.textContent = 'تست اتصال';
+        btn.disabled = false;
+      }
+    }
+
+    async function saveSettings() {
+      const url = document.getElementById('settingScriptUrl').value.trim();
+      const apiKey = document.getElementById('settingApiKey').value.trim() || 'GD-SECRET-2026';
+
+      localStorage.setItem(STORAGE_KEYS.SCRIPT_URL, url);
+      localStorage.setItem(STORAGE_KEYS.API_KEY, apiKey);
+
+      closeSettingsModal();
+      if (url) {
+        await syncFromServer(false);
+      } else {
+        updateConnectionBadge(false);
+        showToast('تنظیمات در حالت محلی ذخیره شد.', 'info');
+      }
+    }
+
+    async function loadSampleDemoData() {
+      const samples = getSampleOrders();
+      const { url } = getCredentials();
+
+      if (url) {
+        try {
+          const res = await callAppsScript('seed_demo', { orders: samples });
+          state.orders = res.data || samples;
+          showToast('داده‌های نمونه در Google Sheets درج شدند.');
+        } catch (err) {
+          showToast(err.message, 'error');
+          return;
+        }
+      } else {
+        state.orders = samples;
+        showToast('داده‌های نمونه آزمایشی بارگذاری شدند.');
+      }
+
+      saveOrdersToCache();
+      refreshDynamicFilterOptions();
+      applyFilters();
+      closeSettingsModal();
+    }
+
+    function exportCSV() {
+      if (state.filteredOrders.length === 0) {
+        showToast('هیچ داده‌ای برای خروجی گرفتن وجود ندارد.', 'error');
+        return;
+      }
+
+      const headers = [
+        'شناسه سفارش', 'سفارش مادر', 'شماره فاکتور', 'عنوان سفارش', 'سفارش‌دهنده',
+        'نوع خروجی', 'ابعاد', 'تاریخ ثبت', 'تاریخ تحویل', 'ساعت کار',
+        'مبلغ کل (تومان)', 'وضعیت مالی', 'مبلغ دریافتی (تومان)', 'لینک درایو', 'نوع تسک', 'توضیحات'
+      ];
+
+      const keys = [
+        'id', 'parent_id', 'invoice_id', 'title', 'client',
+        'category', 'dimensions', 'order_date', 'delivery_date', 'duration_hours',
+        'price', 'payment_status', 'paid_amount', 'drive_link', 'order_type', 'notes'
+      ];
+
+      const csvRows = [
+        headers.join(','),
+        ...state.filteredOrders.map(row =>
+          keys.map(k => `"${String(row[k] ?? '').replace(/"/g, '""')}"`).join(',')
+        )
+      ];
+
+      // افزودن BOM برای نمایش صحیح حروف فارسی در Microsoft Excel
+      const blob = new Blob(['\uFEFF' + csvRows.join('\n')], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = `graphic-orders-${getTodayJalali().formatted.replace(/\//g, '-')}.csv`;
+      link.click();
+    }
+  </script>
 </body>
 </html>
